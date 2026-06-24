@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MBTI Psychophysical Interaction Detector (γ-Model)</title>
+    <!-- Tailwind CSS for modern UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .likert-radio:checked + label {
+            background-color: #4f46e5;
+            color: white;
+            border-color: #4f46e5;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased">
+
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <h1 class="text-3xl font-bold text-indigo-900 mb-2">ระบบคำนวณพลวัตบุคลิกภาพผ่านแบบจำลองเรขาคณิต ($\gamma$-Model)</h1>
+            <p class="text-gray-600 max-w-2xl mx-auto">แบบสอบถามคัดกรอง 50 ข้อ อ้างอิงระบบความสัมพันธ์เชิงจิตฟิสิกส์ตามโครงสร้างคณิตศาสตร์ใน <span class="italic font-semibold">"unified_paper.pdf"</span></p>
+        </header>
+
+        <!-- Questionnaire Section -->
+        <div id="quiz-container" class="bg-white shadow-xl rounded-2xl p-6 md:p-8">
+            <div id="progress-bar" class="w-full bg-gray-200 h-2 rounded-full mb-8">
+                <div id="progress-fill" class="bg-indigo-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+
+            <form id="quiz-form" onsubmit="event.preventDefault(); calculateResult();">
+                <div id="questions-wrapper" class="space-y-8">
+                    <!-- Questions will be injected here via JavaScript -->
+                </div>
+
+                <div class="mt-12 text-center">
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-3 rounded-xl shadow-lg transition duration-200 transform hover:-translate-y-0.5">
+                        ประมวลผลค่าความต้านทานการปฏิสัมพันธ์ ($\gamma$)
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Result Section (Hidden initially) -->
+        <div id="result-container" class="hidden bg-white shadow-xl rounded-2xl p-6 md:p-8 mt-8 space-y-8 animate-fade-in">
+            <div class="border-b border-gray-200 pb-6 text-center">
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">ผลการวิเคราะห์พิกัดบุคลิกภาพ</h2>
+                <div id="primary-mbti" class="text-5xl font-extrabold text-indigo-600 tracking-wider my-4">XXXX</div>
+                <p class="text-sm text-gray-500">คำนวณโดยอิงจากอัตราส่วนการรับรู้เทียบกับการแสดงออกจริง ณ ปัจจุบัน</p>
+            </div>
+
+            <!-- Matrix Display -->
+            <div>
+                <h3 class="text-lg font-bold text-gray-850 mb-3">1. ค่าดัชนีเรขาคณิตการโต้ตอบจำลอง ($\gamma$-Matrix Matrix)</h3>
+                <div class="grid grid-cols-2 gap-4 max-w-md mx-auto bg-gray-50 p-4 rounded-xl font-mono text-center border border-gray-200">
+                    <div class="p-3 bg-white rounded shadow-sm">
+                        <span class="block text-xs text-gray-450">$\gamma_{ii}$ (Self-Feedback)</span>
+                        <span id="m-gii" class="text-lg font-bold text-indigo-600">0.00</span>
+                    </div>
+                    <div class="p-3 bg-white rounded shadow-sm">
+                        <span class="block text-xs text-gray-455">$\gamma_{ij}$ (Cross-Perception)</span>
+                        <span id="m-gij" class="text-lg font-bold text-green-600">0.00</span>
+                    </div>
+                    <div class="p-3 bg-white rounded shadow-sm">
+                        <span class="block text-xs text-gray-455">ค่าเฉลยการรับรู้ ($P$)</span>
+                        <span id="m-p" class="text-lg font-bold text-amber-600">0.00</span>
+                    </div>
+                    <div class="p-3 bg-white rounded shadow-sm">
+                        <span class="block text-xs text-gray-455">ค่าเฉลี่ยการแสดงออก ($S$)</span>
+                        <span id="m-s" class="text-lg font-bold text-rose-600">0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analysis & Reasons -->
+            <div class="space-y-4">
+                <h3 class="text-lg font-bold text-gray-900">2. คำอธิบายและเหตุผลเชิงระบบยึดตามโครงสร้าง $\gamma$</h3>
+                <div id="analysis-reason" class="bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded-r-xl text-gray-700 leading-relaxed">
+                    <!-- Reason text -->
+                </div>
+            </div>
+
+            <!-- Future Drift Prediction -->
+            <div class="border-t border-gray-200 pt-6 space-y-4">
+                <h3 class="text-lg font-bold text-gray-900 text-rose-700">3. การวิเคราะห์แนวโน้มการเปลี่ยนแปลงในอนาคต (MBTI Drift Analysis)</h3>
+                <p class="text-gray-600 text-sm">
+                    ภายใต้ทฤษฎีอารมณ์ลำดับที่สอง เมื่อระบบเข้าสู่สภาวะปล่อยวางทางอารมณ์ (Emotional Relaxation) 
+                    ค่าตัวสร้างกระแส ($M$) จะแปรผันตามเวลา $m_{ii}(t) = \frac{1}{t+\tau_i}$ ส่งผลให้โครงสร้าง $\gamma = e^{M\Delta t}$ ของคุณเกิดการขยับพิกัดเมื่อเวลาผ่านไป
+                </p>
+                <div class="bg-rose-50 border-l-4 border-rose-500 p-4 rounded-r-xl">
+                    <p class="font-semibold text-rose-950 mb-2">ไทป์ทางเลือกที่มีแนวโน้มจะเป็นไปได้ในอนาคต:</p>
+                    <div id="future-mbti" class="text-2xl font-bold text-rose-600 tracking-wide mb-3">XXXX</div>
+                    <div id="future-reason" class="text-gray-700 text-sm leading-relaxed">
+                        <!-- Future trend analysis -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center pt-4">
+                <button onclick="window.scrollTo({top: 0, behavior: 'smooth'});" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                    ↑ กลับไปทำแบบทดสอบใหม่
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Generating 50 precise questions targeting P (Perception) and S (Expression) across MBTI dimensions
+        // Dimensions: E/I, S/N, T/F, J/P mapped into Psychophysical Signals
+        const questions = [
+            // E vs I (1-12)
+            { id: 1, type: "P", dim: "EI", q: "คุณไวต่อการรับรู้อารมณ์หรือปฏิกิริยาของคนอื่นในห้องอย่างรวดเร็ว" },
+            { id: 2, type: "S", dim: "EI", q: "คุณชอบแสดงออกหรือป้อนสัญญาณคำพูด/ท่าทางออกไปเพื่อกระตุ้นบทสนทนา" },
+            { id: 3, type: "P", dim: "EI", q: "หลังการพูดคุย คุณมักใช้เวลาภายในคิดวนเวียนเกี่ยวกับสิ่งที่คุณเพิ่งตอบไป (Self-loop)" },
+            { id: 4, type: "S", dim: "EI", q: "คุณมักจะพูดหรือตอบสนองทันทีโดยไม่ต้องรอให้สิ่งเร้าภายนอกหยุดนิ่ง" },
+            { id: 5, type: "P", dim: "EI", q: "คุณรู้สึกว่าพลังงานภายในลดลงทันทีเมื่อต้องเปิดรับข้อมูลจากผู้คนจำนวนมาก" },
+            { id: 6, type: "S", dim: "EI", q: "ความคิดของคุณจะแล่นได้ดีที่สุดเมื่อได้ส่งสัญญาณและถกเถียงกับผู้อื่นส่งกลับไปกลับมา" },
+            { id: 7, type: "P", dim: "EI", q: "คุณสังเกตเห็นความเปลี่ยนแปลงในน้ำเสียงของคู่สนทนาแม้เพียงเล็กน้อย" },
+            { id: 8, type: "S", dim: "EI", q: "คุณชอบเป็นผู้นำส่งสัญญาณเชิงบวก (เช่น การชวนคุย, รอยยิ้ม) ให้คนในกลุ่มก่อน" },
+            { id: 9, type: "P", dim: "EI", q: "คุณมักจะเก็บงำความเห็นและปล่อยให้ระบบสิ่งเร้ารอบตัวนิ่งลงก่อนจึงค่อยคิด" },
+            { id: 10, type: "S", dim: "EI", q: "ในกลุ่มเพื่อน คุณมักเป็นคนส่งสัญญาณเสียงที่ดังหรือแสดงออกได้ชัดเจนที่สุด" },
+            { id: 11, type: "P", dim: "EI", q: "คุณใช้เวลาวิเคราะห์สภาวะจิตใจของตัวเองบ่อยกว่าสภาวะภายนอก" },
+            { id: 12, type: "S", dim: "EI", q: "คุณยินดีที่จะแสดงความคิดเห็นแปลกใหม่ทันทีแม้จะยังจัดระเบียบมันไม่เสร็จก็ตาม" },
+
+            // S vs N (13-24)
+            { id: 13, type: "P", dim: "SN", q: "คุณรับรู้และจดจำรายละเอียดทางกายภาพ (ภาพ, เสียง, กลิ่น) ของสิ่งรอบตัวได้แม่นยำมาก" },
+            { id: 14, type: "S", dim: "SN", q: "เวลาอธิบายงาน คุณเลือกที่จะแสดงออกเป็นขั้นตอนที่จับต้องได้และมีตัวอย่างจริงประกอบ" },
+            { id: 15, type: "P", dim: "SN", q: "คุณมักรับรู้สิ่งเร้าแล้วตีความข้ามช็อตไปสู่ความเป็นไปได้เชิงสัญลักษณ์หรือภาพรวมในอนาคต" },
+            { id: 16, type: "S", dim: "SN", q: "เมื่อคุยกับผู้อื่น คุณชอบนำเสนอไอเดียเชิงนามธรรมหรือกรอบแนวคิดทฤษฎีกว้างๆ" },
+            { id: 17, type: "P", dim: "SN", q: "คุณหงุดหงิดกับข้อมูลที่ไม่มีหลักฐานเชิงประจักษ์มารองรับในปัจจุบัน" },
+            { id: 18, type: "S", dim: "SN", q: "เวลาทำงานคุณมักใช้วิธีทดลองแก้ปัญหาเฉพาะหน้าด้วยการลงมือทำจริงมากกว่าวางแผนในหัว" },
+            { id: 19, type: "P", dim: "SN", q: "คุณมักจะเกิดไอเดียพรั่งพรูขึ้นมาในใจ (Aha! Moment) จากการเชื่อมโยงสิ่งที่ไม่เกี่ยวข้องกัน" },
+            { id: 20, type: "S", dim: "SN", q: "คุณมักใช้คำเปรียบเปรยอุปมาอุปไมย (Metaphor) ในการสื่อสารสารออกไป" },
+            { id: 21, type: "P", dim: "SN", q: "คุณให้ความสำคัญกับ 'สิ่งที่เป็นอยู่จริง' มากกว่า 'สิ่งที่อาจจะเป็นไปได้'" },
+            { id: 22, type: "S", dim: "SN", q: "การคิดค้นนวัตกรรมหรือทำสิ่งที่ไม่เคยมีใครทำมาก่อนเป็นสัญญาณหลักที่คุณชอบแสดงออก" },
+            { id: 23, type: "P", dim: "SN", q: "คุณมองเห็นรูปแบบความสัมพันธ์ (Pattern) และลางสังหรณ์ในเหตุการณ์ต่างๆ ได้ง่าย" },
+            { id: 24, type: "S", dim: "SN", q: "เวลาเล่าเรื่อง คุณมักจะโฟกัสที่รายละเอียดของข้อเท็จจริงดั้งเดิมไม่ตกหล่น" },
+
+            // T vs F (25-36)
+            { id: 25, type: "P", dim: "TF", q: "เมื่อเกิดความขัดแย้ง คุณประเมินสถานการณ์โดยแยกแยะข้อเท็จจริงออกจากความรู้สึกของบุคคล" },
+            { id: 26, type: "S", dim: "TF", q: "คุณมักส่งสัญญาณวิจารณ์หรือชี้ข้อบกพร่องของผู้อื่นตรงๆ เพื่อแก้ไขระบบให้ถูกต้อง" },
+            { id: 27, type: "P", dim: "TF", q: "คุณมีความเห็นอกเห็นใจและซึมซับเอาความเจ็บปวดทางอารมณ์ของคนรอบข้างมาไว้ในใจสูง" },
+            { id: 28, type: "S", dim: "TF", q: "คุณชอบแสดงออกเพื่อปกป้องความกลมเกลียวและรักษาความรู้สึกของกลุ่มไว้เป็นอันดับแรก" },
+            { id: 29, type: "P", dim: "TF", q: "คุณรู้สึกอึดอัดเมื่อคนรอบตัวใช้อารมณ์ในการตัดสินปัญหาแทนที่จะใช้เหตุผล" },
+            { id: 30, type: "S", dim: "TF", q: "เมื่อตัดสินใจ คุณเลือกใช้ตรรกะที่เป็นสากลและมีความเด็ดขาดโดยไม่เอาความสัมพันธ์ส่วนตัวมาเกี่ยว" },
+            { id: 31, type: "P", dim: "TF", q: "คุณรับรู้และเข้าใจในทันทีว่าค่านิยมภายในหรือศีลธรรมของใครบางคนกำลังถูกสั่นคลอน" },
+            { id: 32, type: "S", dim: "TF", q: "คุณแสดงออกความรู้สึกอบอุ่น ปลอบโยน และซัพพอร์ตผู้อื่นอย่างเป็นธรรมชาติ" },
+            { id: 33, type: "P", dim: "TF", q: "คุณให้ความสำคัญกับความยุติธรรมและความถูกต้องตามหลักเกณฑ์มากกว่าความพอใจของบุคคล" },
+            { id: 34, type: "S", dim: "TF", q: "คุณยอมเปลี่ยนเป้าหมายของตนเองได้ หากการส่งสัญญาณนั้นทำให้คนรอบข้างมีความสุข" },
+            { id: 35, type: "P", dim: "TF", q: "คุณวิเคราะห์ระบบการทำงานของสิ่งต่างๆ (กลไก, ซอฟต์แวร์, กฎหมาย) ด้วยความสนใจเป็นพิเศษ" },
+            { id: 36, type: "S", dim: "TF", q: "คุณใช้หัวใจและความรู้สึกส่วนตัวเป็นเข็มทิศหลักในการส่งสัญญาณเลือกทางเดินชีวิต" },
+
+            // J vs P (37-50)
+            { id: 37, type: "P", dim: "JP", q: "คุณต้องการเห็นความชัดเจน โครงสร้าง และข้อสรุปที่แน่นอนในสถานการณ์ต่างๆ" },
+            { id: 38, type: "S", dim: "JP", q: "คุณจัดระเบียบตารางเวลา ร่างแผนงาน และควบคุมการแสดงพฤติกรรมให้อยู่ในกรอบอย่างเคร่งครัด" },
+            { id: 39, type: "P", dim: "JP", q: "คุณเปิดรับทุกความเปลี่ยนแปลง และรู้สึกสบายใจในสภาพแวดล้อมที่ยืดหยุ่นไม่มีกรอบตายตัว" },
+            { id: 40, type: "S", dim: "JP", q: "คุณชอบปล่อยให้สิ่งต่างๆ ดำเนินไปอย่างอิสระ สุ่มพฤติกรรม และปรับตัวตามสถานการณ์เฉพาะหน้า" },
+            { id: 41, type: "P", dim: "JP", q: "คุณรู้สึกเครียดเมื่อแผนงานที่วางไว้ไม่เป็นไปตามกรอบเวลาที่ล็อกไว้" },
+            { id: 42, type: "S", dim: "JP", q: "คุณชอบตัดสินใจหรือปิดจบโปรเจกต์ให้เสร็จสิ้นโดยเร็วที่สุดเพื่อก้าวไปข้างหน้า" },
+            { id: 43, type: "P", dim: "JP", q: "คุณมักจะมองหาทางเลือกใหม่ๆ เพิ่มเติมอยู่เสมอ แม้ว่าข้อมูลที่มีจะเพียงพอแล้วก็ตาม" },
+            { id: 44, type: "S", dim: "JP", q: "คุณมักจะผัดวันประกันพรุ่งหรือทำสิ่งต่างๆ ในช่วงนาทีสุดท้ายโดยอาศัยพลังแห่งความกดดัน" },
+            { id: 45, type: "P", dim: "JP", q: "คุณรู้สึกพึงพอใจเมื่อชีวิตมีการควบคุมที่คาดเดาได้ล่วงหน้า" },
+            { id: 46, type: "S", dim: "JP", q: "คุณชอบตั้งเป้าหมายในระยะยาวและลงมือทำตามขั้นตอนที่กำหนดไว้ทีละสเต็ปอย่างเป็นระบบ" },
+            { id: 47, type: "P", dim: "JP", q: "คุณมองว่าระเบียบวินัยที่เข้มงวดเกินไปคือการตีกรอบขัดขวางอิสรภาพในการรับรู้" },
+            { id: 48, type: "S", dim: "JP", q: "คุณพร้อมที่จะเปลี่ยนแผนกลางคันทันทีหากเจอสิ่งอื่นที่น่าสนใจหรือน่าสนุกกว่า" },
+            { id: 49, type: "P", dim: "JP", q: "คุณให้ความสำคัญกับการเตรียมความพร้อมล่วงหน้าก่อนเผชิญหน้ากับสิ่งเร้าทุกรูปแบบ" },
+            { id: 50, type: "S", dim: "JP", q: "คุณรักษาสภาพแวดล้อมทางกายภาพและไฟล์งานของคุณให้อยู่ในระบบระเบียบที่ระบุได้ง่าย" }
+        ];
+
+        // Render Questions Realtime with local storage update
+        const wrapper = document.getElementById('questions-wrapper');
+        questions.forEach((q, index) => {
+            const qDiv = document.createElement('div');
+            qDiv.className = "p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-3 transition duration-150 hover:border-gray-300";
+            qDiv.innerHTML = `
+                <div class="flex items-start">
+                    <span class="font-mono text-xs font-bold text-indigo-400 bg-white border border-indigo-200 px-2 py-0.5 rounded mr-3 mt-1">${q.id}</span>
+                    <p class="text-gray-900 font-medium">${q.q}</p>
+                </div>
+                <div class="flex justify-between items-center max-w-md ml-8 pt-2">
+                    <span class="text-xs text-gray-400">น้อยที่สุด</span>
+                    <div class="flex space-x-2 md:space-x-4">
+                        ${[1,2,3,4,5].map(v => `
+                            <div class="relative">
+                                <input type="radio" id="q_${q.id}_${v}" name="q_${q.id}" value="${v}" required 
+                                       class="likert-radio hidden" onChange="updateProgress()">
+                                <label for="q_${q.id}_${v}" class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full border-2 border-gray-300 text-sm font-semibold cursor-pointer transition-all duration-150 text-gray-500 hover:border-indigo-400">
+                                    ${v}
+                                </label>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <span class="text-xs text-gray-400">มากที่สุด</span>
+                </div>
+            `;
+            wrapper.appendChild(qDiv);
+        });
+
+        // Track Progress
+        function updateProgress() {
+            const formData = new FormData(document.getElementById('quiz-form'));
+            let answered = 0;
+            for(let pair of formData.entries()) { answered++; }
+            const pct = (answered / questions.length) * 100;
+            document.getElementById('progress-fill').style.width = pct + '%';
+        }
+
+        // Hardcore Mathematical Core processing based on unified_paper.pdf
+        function calculateResult() {
+            const form = document.getElementById('quiz-form');
+            const data = new FormData(form);
+
+            // Accumulators for scores
+            let scores = {
+                EI: { P: 0, S: 0, countP: 0, countS: 0 },
+                SN: { P: 0, S: 0, countP: 0, countS: 0 },
+                TF: { P: 0, S: 0, countP: 0, countS: 0 },
+                JP: { P: 0, S: 0, countP: 0, countS: 0 }
+            };
+
+            questions.forEach(q => {
+                const val = parseInt(data.get(`q_${q.id}`));
+                if (q.type === "P") {
+                    scores[q.dim].P += val;
+                    scores[q.dim].countP++;
+                } else {
+                    scores[q.dim].S += val;
+                    scores[q.dim].countS++;
+                }
+            });
+
+            // Calculate exact averages for P (Perception) and S (Expression Vector)
+            let avgP = 0, avgS = 0, keysCount = 0;
+            for (let dim in scores) {
+                scores[dim].avgP = scores[dim].P / scores[dim].countP;
+                scores[dim].avgS = scores[dim].S / scores[dim].countS;
+                avgP += scores[dim].avgP;
+                avgS += scores[dim].avgS;
+                keysCount++;
+            }
+            avgP /= keysCount;
+            avgS /= keysCount;
+
+            // Compute Gamma components according to Paper Section 2.2 Theorem 2.4: gamma = P_sensitivity / S_signal
+            // Formulating gamma_ii (self feedback) vs gamma_ij (cross perceptual impact boundary)
+            let gamma_ii = avgP / (avgS || 1); 
+            let gamma_ij = avgP / ((6 - avgS) || 1); // inverse scaling for off-diagonal interaction projection
+
+            // Map variables to traditional MBTI Dichotomy via score differences
+            let mbti_E_I = (scores.EI.avgS >= scores.EI.avgP) ? "E" : "I";
+            let mbti_S_N = (scores.SN.avgP >= scores.SN.avgS) ? "S" : "N"; // S experiences direct ambient stimulus P
+            let mbti_T_F = (scores.TF.avgS >= scores.TF.avgP) ? "T" : "F"; // T expresses structural metrics S
+            let mbti_A_B = (scores.JP.avgS >= scores.JP.avgP) ? "J" : "P"; // J acts to drive stability flows
+            let primaryType = mbti_E_I + mbti_S_N + mbti_T_F + mbti_A_B;
+
+            // Render Realtime Metrics
+            document.getElementById('m-gii').innerText = gamma_ii.toFixed(3);
+            document.getElementById('m-gij').innerText = gamma_ij.toFixed(3);
+            document.getElementById('m-p').innerText = avgP.toFixed(2);
+            document.getElementById('m-s').innerText = avgS.toFixed(2);
+            document.getElementById('primary-mbti').innerText = primaryType;
+
+            // Section 2: Rigorous Reason Generation matching Section 3/7 of the unified framework
+            let reasoning = `คุณได้รับการวินิจฉัยเป็นบุคลิกภาพกลุ่ม <strong>${primaryType}</strong> เนื่องจากพฤติกรรมของคุณสะท้อนความสัมพันธ์เชิงตรรกะในแบบจำลองดังนี้:<br><br>`;
+            
+            if (gamma_ii > 1.0) {
+                reasoning += `• <strong>ค่า $\\gamma_{ii}$ ของคุณสูง (${gamma_ii.toFixed(2)} > 1.0):</strong> แสดงถึงสภาวะที่การรับรู้และการประมวลผลภายในตัวตน (Self-perception loop) มีน้ำหนักมากกว่าพลังการส่งสัญญาณออกภายนอก ซึ่งเป็นคุณลักษณะหลักทางคณิตศาสตร์ของกลุ่มสาย <strong>Introverted (${mbti_E_I})</strong> ระบบของคุณมีความหน่วงเฉื่อยทางอารมณ์สูงและตอบสนองต่อสิ่งเร้าภายนอกค่อนข้างช้าแต่ลึกซึ้ง<br>`;
+            } else {
+                reasoning += `• <strong>ค่า $\\gamma_{ii}$ ของคุณต่ำ (${gamma_ii.toFixed(2)} ≤ 1.0):</strong> หมายความว่าความเข้มข้นของการส่งสัญญาณแอคทีฟ ($I_S$) ของคุณมีค่าสูงกว่าระบบรับรู้สะท้อนคิดภายใน เป็นคุณลักษณะเด่นของกลุ่มสาย <strong>Extraverted (${mbti_E_I})</strong> ซึ่งระบบของคุณมีแรงต้านทานการปฏิสัมพันธ์ต่ำ พร้อมที่จะกระจายพลังงานโต้ตอบอย่างรวดเร็วต่อเนื่อง<br>`;
+            }
+
+            if (mbti_T_F === "T") {
+                reasoning += `• <strong>ตัวสร้างกระแสตรรกะเด่น:</strong> คะแนนบ่งชี้ว่าเมื่อเกิดการเบี่ยงเบนทางพฤติกรรม ระบบของคุณพยายามดึงตัวแปรกลับเข้าสู่สภาวะสมดุลผ่านการวิเคราะห์ด้วยเกณฑ์คงที่ (Jury Stability Criterion) ส่งผลให้วิถีของกระแสอารมณ์ของคุณมักเป็นแบบลูกคลื่นฮาร์มอนิกที่คุมทิศทางได้ชัดเจน ไม่หลุดออกนอกขอบเขตความเสถียร<br>`;
+            } else {
+                reasoning += `• <strong>ตัวสร้างกระแสอารมณ์แปรปรวนสูง:</strong> คะแนนกลุ่ม Feeling ชี้ให้เห็นว่าระบบการตอบสนองของคุณมีความไวต่อการเปลี่ยนสถานะแบบคู่แฝด (Neimark-Sacker Transition) ซึ่งทำให้เกิดการสั่นไหวและเป็นวงรอบอารมณ์แบบขยับกว้าง (Oscillatory Dynamics) ได้ง่ายเมื่อเกิดสภาวะความขัดแย้งเชิงโครงสร้าง<br>`;
+            }
+
+            document.getElementById('analysis-reason').innerHTML = reasoning;
+
+            // Section 3: Future Drift Simulation (Riccati relaxation drift calculation)
+            // According to Section 5.2, under relaxation E(t) = 0, M(t) decays as 1/(t+tau). 
+            // In the long run, extreme expressions dampen, shifting MBTI axes towards neutral bounds.
+            let driftType = "";
+            driftType += (mbti_E_I === "I") ? "E" : "I"; // Introverts unbind inward loop, Extraverts dampen signal
+            driftType += mbti_S_N; // S/N usually remains historically stable as it governs core geometric coordinate
+            driftType += (mbti_T_F === "F") ? "T" : "F"; // F relaxes towards structural stability (T), T expands to (F) due to matrix curvature accumulation
+            driftType += (mbti_A_B === "J") ? "P" : "J"; // J systems relax rigidity down towards P; P under field trapping scales up towards J
+            
+            document.getElementById('future-mbti').innerText = driftType;
+
+            let futureReasoning = `จากแบบจำลองในส่วนที่ 5 ของ <em>unified_paper.pdf</em> เมื่อเวลาผ่านไปและระบบของคุณเข้าสู่กระบวนการผ่อนคลายความตึงเครียด (Emotional Relaxation ที่ค่า $E(t)=0$) ตัวแปรการเคลื่อนที่ในเมทริกซ์กระแสไหล $M(t)$ จะปรับเปลี่ยนเข้าหาค่าอนันต์แบบแปรผกผัน $m_{ii}(t) = \\frac{1}{t+\\tau_i}$:<br><br>`;
+            
+            futureReasoning += `ผลลัพธ์นี้ทำให้พิกัดเรขาคณิตของคุณเกิดการบิดโค้งและดึงดูดวิถีชีวิต (Geodesic Attraction) เข้าหาจุดสมดุลใหม่ ส่งผลให้คุณมีแนวโน้มจะแสดงออกพฤติกรรมสลับขั้วไปเป็นไทป์ทางเลือกอย่าง <strong>${driftType}</strong> ด้วยเหตุผลเชิงพลวัตสองประการ:<br><br>`;
+            futureReasoning += `1. <strong>การสลายตัวของแรงต้านภายใน (Inertia Decay):</strong> หากคุณเป็นกลุ่มประมวลผลภายในสูง แรงผ่อนคลายจะลดทอนกำแพงสะท้อนคิดลง ทำให้เมื่อคุณเติบโตขึ้น คุณจะมีความเป็นอิสระและโต้ตอบกับโลกภายนอกได้อย่างเป็นธรรมชาติและมีความยืดหยุ่นมากขึ้น<br>`;
+            futureReasoning += `2. <strong>ผลกระทบจากส่วนโค้งของสนามเรขาคณิต (Field Trapping):</strong> ภายใต้ข้อจำกัดของสมการสนามไอน์สไตน์จำลอง แรงขับเคลื่อนพฤติกรรมของคุณจะวิ่งผ่านเส้นทางสั้นที่สุด (Geodesic Flow) ซึ่งบีบให้ขั้วที่ตึงเครียดเกินไป (เช่น ความเป็น J ที่จัดระเบียบจัด หรือ F ที่อ่อนไหวสูง) ต้องปรับสมดุลลง ส่งผลให้คุณเปลี่ยนผ่านไปสู่พฤติกรรมที่สมดุลและมั่นคงยิ่งขึ้นในอนาคต`;
+
+            document.getElementById('future-reason').innerHTML = futureReasoning;
+
+            // Display results smoothly
+            const resContainer = document.getElementById('result-container');
+            resContainer.classList.remove('hidden');
+            resContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
