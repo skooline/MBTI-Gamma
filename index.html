@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MBTI Psychophysical Interaction & Grip/Loop Detector (γ-Model v2.6 - Fixed)</title>
+    <!-- Tailwind CSS for modern UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for Radar Chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .likert-radio:checked + label {
+            background-color: #4f46e5;
+            color: white;
+            border-color: #4f46e5;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased">
+
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <h1 class="text-3xl font-bold text-indigo-900 mb-2">ระบบคำนวณพลวัตบุคลิกภาพและสภาวะจิตใจขั้นสูง ($\gamma$-Model v2.6)</h1>
+            <p class="text-gray-600 max-w-2xl mx-auto">แบบสอบถามคัดกรอง 100 ข้อ ผสานทฤษฎีจิตวิทยาฟังก์ชันร่วมกับวิเคราะห์ทิศทางด้วยแผนภูมิเรดาร์
+            </p>
+        </header>
+
+        <!-- Questionnaire Section -->
+        <div id="quiz-container" class="bg-white shadow-xl rounded-2xl p-6 md:p-8">
+            <div id="progress-bar" class="w-full bg-gray-200 h-2 rounded-full mb-8">
+                <div id="progress-fill" class="bg-indigo-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+
+            <form id="quiz-form" onsubmit="event.preventDefault(); calculateResult();">
+                <div id="questions-wrapper" class="space-y-6">
+                    <!-- 100 Questions will be injected here via JavaScript -->
+                </div>
+
+                <div class="mt-12 text-center">
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-3 rounded-xl shadow-lg transition duration-200 transform hover:-translate-y-0.5">
+                        ประมวลผลเมทริกซ์ความต้านทานและวิเคราะห์ทิศทางไทป์
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Result Section -->
+        <div id="result-container" class="hidden bg-white shadow-xl rounded-2xl p-6 md:p-8 mt-8 space-y-8">
+            <div class="border-b border-gray-200 pb-6 text-center">
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">ผลการวิเคราะห์พิกัดและสภาวะบุคลิกภาพ</h2>
+                <div id="primary-mbti" class="text-6xl font-extrabold text-indigo-600 tracking-wider my-4">XXXX</div>
+                <p class="text-sm text-gray-500">คำนวณโดยอิงจากอัตราส่วนการรับรู้เทียบกับการแสดงออกจริง ณ ปัจจุบัน</p>
+            </div>
+
+            <!-- Radar Chart Visualizer -->
+            <div class="bg-white p-6 rounded-2xl border border-gray-200">
+                <h3 class="text-lg font-bold text-gray-900 mb-2 text-center">แผนภูมิเรดาร์แสดงแนวโน้มความเอนเอียงบุคลิกภาพ (MBTI Spectrum)</h3>
+                <p class="text-xs text-gray-500 text-center mb-6">กราฟแสดงค่าเฉลี่ยคะแนน (1-5) ยิ่งกราฟเอนไปทางขั้วใด แสดงว่าคุณมีแนวโน้มใช้ฟังก์ชันฝั่งนั้นเด่นชัด</p>
+                <div class="w-full max-w-md mx-auto aspect-square">
+                    <canvas id="mbtiRadarChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Matrix Display -->
+            <div class="bg-gray-50 p-6 rounded-2xl border border-gray-200">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 text-center">ค่าดัชนีเรขาคณิตปฏิสัมพันธ์จำลอง ($\gamma$-Matrix)</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center font-mono">
+                    <div class="p-3 bg-white rounded-xl shadow-sm">
+                        <span class="block text-xs text-gray-500">$\gamma_{ii}$ (Self-Feedback)</span>
+                        <span id="m-gii" class="text-lg font-bold text-indigo-600">0.00</span>
+                    </div>
+                    <div class="p-3 bg-white rounded-xl shadow-sm">
+                        <span class="block text-xs text-gray-500">$\gamma_{ij}$ (Cross-Perception)</span>
+                        <span id="m-gij" class="text-lg font-bold text-green-600">0.00</span>
+                    </div>
+                    <div class="p-3 bg-white rounded-xl shadow-sm">
+                        <span class="block text-xs text-gray-500">ค่าการรับรู้ ($P$)</span>
+                        <span id="m-p" class="text-lg font-bold text-amber-600">0.00</span>
+                    </div>
+                    <div class="p-3 bg-white rounded-xl shadow-sm">
+                        <span class="block text-xs text-gray-500">ค่าการแสดงออก ($S$)</span>
+                        <span id="m-s" class="text-lg font-bold text-rose-600">0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grip & Loop Condition Detection -->
+            <div class="border-t border-gray-200 pt-6">
+                <div class="flex items-center space-x-2 mb-4">
+                    <h3 class="text-lg font-bold text-gray-900">การประเมินสภาวะสะสมทางอารมณ์:</h3>
+                    <div class="font-mono bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded text-sm">
+                        Emotion Quantity ($E$) = <span id="emotion-e-val">0.00</span>
+                    </div>
+                </div>
+                <div id="state-badge" class="inline-block px-4 py-2 rounded-xl text-white font-bold text-lg mb-4">
+                    สภาวะ: กำลังวิเคราะห์...
+                </div>
+                <div id="state-description" class="p-4 rounded-xl leading-relaxed text-sm md:text-base">
+                    <!-- Grip/Loop/Normal diagnosis will appear here -->
+                </div>
+                <div id="remedy-section" class="mt-4 p-4 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-xl hidden">
+                    <h4 class="font-bold text-emerald-900 mb-2">💡 แนวทางการปรับตัวเชิงกลไก (Algorithmic Remedy):</h4>
+                    <p id="remedy-text" class="text-gray-700 text-sm leading-relaxed"></p>
+                </div>
+            </div>
+
+            <!-- Analysis & Reasons -->
+            <div class="border-t border-gray-200 pt-6 space-y-4">
+                <h3 class="text-lg font-bold text-gray-900">คำอธิบายและเหตุผลเชิงระบบยึดตามโครงสร้าง $\gamma$</h3>
+                <div id="analysis-reason" class="bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded-r-xl text-gray-700 text-sm leading-relaxed">
+                    <!-- Reason text -->
+                </div>
+            </div>
+
+            <!-- Future Drift Prediction -->
+            <div class="border-t border-gray-200 pt-6 space-y-4">
+                <h3 class="text-lg font-bold text-rose-700">การวิเคราะห์แนวโน้มการเปลี่ยนแปลงในอนาคต (MBTI Drift Analysis)</h3>
+                <p class="text-gray-600 text-sm">
+                    ภายใต้ทฤษฎีอารมณ์ลำดับที่สอง เมื่อระบบตรวจพบสภาวะการทำงานผิดพลาดเฉพาะจุด (Anomalous Vector Breakdown) ตัวแปรในเมทริกซ์กระแสไหลจะคำนวณการซ่อมแซมพิกัดดัชนีที่ดิ่งต่ำสุดเพื่อกู้คืนสมดุลให้ระบบกลับมาเสถียร
+                </p>
+                <div class="bg-rose-50 border-l-4 border-rose-500 p-4 rounded-r-xl">
+                    <p class="font-semibold text-rose-950 mb-2">ไทป์ทางเลือกที่มีแนวโน้มจะเป็นไปได้ในอนาคตเมื่อจิตใจได้รับการเยียวยาแก้ไขพิกัด:</p>
+                    <div id="future-mbti" class="text-2xl font-bold text-rose-600 tracking-wide mb-3">XXXX</div>
+                    <div id="future-reason" class="text-gray-700 text-sm leading-relaxed">
+                        <!-- Future trend analysis -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center pt-4">
+                <button onclick="window.scrollTo({top: 0, behavior: 'smooth'});" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                    ↑ กลับไปทำแบบทดสอบใหม่
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Generating 100 accurate questions mapped onto P (Perception) and S (Expression) for MBTI & Volatility tracking
+        const questions = [
+            // E vs I (1-25)
+            { id: 1, type: "P", dim: "EI", q: "คุณรู้สึกไวและรับรู้ถึงบรรยากาศหรือพลังงานอารมณ์ของคนในห้องได้อย่างรวดเร็ว" },
+            { id: 2, type: "S", dim: "EI", q: "คุณเลือกที่จะส่งเสียงหรือชวนพูดคุยก่อนเพื่อกระตุ้นให้คนรอบข้างตื่นตัว" },
+            { id: 3, type: "P", dim: "EI", q: "หลังจากแยกย้ายจากกลุ่มสังคม คุณมักใช้เวลาคิดทบทวนคำพูดของตัวเองซ้ำๆ (Self-loop)" },
+            { id: 4, type: "S", dim: "EI", q: "คุณมักจะแสดงความคิดเห็นออกไปในทันทีที่เกิดคำถาม โดยไม่ต้องหยุดคิดนาน" },
+            { id: 5, type: "P", dim: "EI", q: "การอยู่ร่วมกับผู้คนจำนวนมากทำให้คุณรู้สึกพลังงานภายในลดฮวบลงเรื่อยๆ" },
+            { id: 6, type: "S", dim: "EI", q: "คุณคิดไอเดียใหม่ๆ ได้ดีที่สุดเมื่อได้พูดถกเถียงและแลกเปลี่ยนกับผู้อื่นภายนอก" },
+            { id: 7, type: "P", dim: "EI", q: "คุณสังเกตเห็นการเปลี่ยนสีหน้าหรือสายตาของคนอื่นได้อย่างชัดเจนแม้จะเบาบางมาก" },
+            { id: 8, type: "S", dim: "EI", q: "คุณยินดีที่จะเป็นคนนำขบวนหรือสร้างเสียงหัวเราะให้กับกลุ่มอยู่เสมอ" },
+            { id: 9, type: "P", dim: "EI", q: "คุณชอบเก็บความลับหรือความรู้สึกไว้ประมวลผลคนเดียวจนกว่าจะมั่นใจ" },
+            { id: 10, type: "S", dim: "EI", q: "คุณมักจะพูดแทรกหรือส่งสัญญาณตอบโต้ออกไปในตอนที่กำลังตื่นเต้นกับหัวข้อนั้น" },
+            { id: 11, type: "P", dim: "EI", q: "คุณรู้สึกสนุกและมีพลังกับการสำรวจโลกความคิดที่เงียบสงบภายในตัวเอง" },
+            { id: 12, type: "S", dim: "EI", q: "คุณไม่มีปัญหากับการเดินเข้าไปทักทายคนแปลกหน้าก่อนในงานเลี้ยง" },
+            { id: 13, type: "P", dim: "EI", q: "คุณมักหลีกเลี่ยงการเป็นศูนย์กลางความสนใจเพราะรู้สึกว่ามีสิ่งเร้าพุ่งมามากเกินไป" },
+            { id: 14, type: "S", dim: "EI", q: "คุณชอบการสื่อสารผ่านการพูดคุยหรือโทรคุยมากกว่าการพิมพ์ข้อความยาวๆ" },
+            { id: 15, type: "P", dim: "EI", q: "คุณไวต่อการสัมผัสได้ถึงสภาวะอารมณ์ตึงเครียดของผู้อื่นแม้ไม่มีใครพูดออกมา" },
+            { id: 16, type: "S", dim: "EI", q: "คุณมักโพสต์ แชร์ หรือแสดงออกทางโซเชียลมีเดียอย่างสม่ำเสมอเมื่อมีความคิดใหม่ๆ" },
+            { id: 17, type: "P", dim: "EI", q: "คุณต้องใช้เวลาอยู่คนเดียวเพื่อ 'ชาร์จแบต' หลังจากทำกิจกรรมร่วมกับผู้อื่น" },
+            { id: 18, type: "S", dim: "EI", q: "ในวงสนทนา คุณมักเป็นฝ่ายเติมเต็มความเงียบด้วยการเปิดประเด็นใหม่" },
+            { id: 19, type: "P", dim: "EI", q: "คุณมักประเมินสภาวะความพร้อมของจิตใจตนเองก่อนจะตอบรับนัดหมายใดๆ" },
+            { id: 20, type: "S", dim: "EI", q: "คุณมักทำอะไรรวดเร็ว มีท่าทางประกอบที่ชัดเจน และเข้าถึงได้ง่าย" },
+            { id: 21, type: "P", dim: "EI", q: "คุณพบว่าการคุยเรื่องสัพเพเหระ (Small Talk) เป็นเรื่องที่กลืนพลังงานของคุณอย่างมาก" },
+            { id: 22, type: "S", dim: "EI", q: "คุณชอบทำงานในพื้นที่เปิดโล่ง (เช่น Co-working space) ที่มีผู้คนเคลื่อนไหวไปมา" },
+            { id: 23, type: "P", dim: "EI", q: "คุณต้องการเวลาส่วนตัวอย่างเด็ดขาดในแต่ละวันเพื่อจัดระเบียบความคิด" },
+            { id: 24, type: "S", dim: "EI", q: "คุณชอบเข้าร่วมกิจกรรมกลุ่มหรือคลับที่มีความสนใจร่วมกันอย่างกระตือรือร้น" },
+            { id: 25, type: "P", dim: "EI", q: "คุณมักจะพูดคุยกับตัวเองในใจเพื่อประมวลผลสถานการณ์รอบตัว" },
+
+            // S vs N (26-50)
+            { id: 26, type: "P", dim: "SN", q: "คุณโฟกัสกับข้อเท็จจริงและสิ่งเร้าที่จับต้องได้ตรงหน้าอย่างเต็มที่" },
+            { id: 27, type: "S", dim: "SN", q: "คุณนำเสนอข้อมูลโดยการยกตัวอย่างสถิติ ตัวเลข หรือประสบการณ์จริงที่เกิดขึ้นแล้ว" },
+            { id: 28, type: "P", dim: "SN", q: "คุณมักจะปล่อยใจให้คิดไปถึงความเป็นไปได้ในอนาคตหรือภาพรวมขนาดใหญ่" },
+            { id: 29, type: "S", dim: "SN", q: "คุณชอบส่งสัญญาณแนวคิดเชิงทฤษฎี ปรัชญา หรือไอเดียที่เป็นนามธรรมออกไป" },
+            { id: 30, type: "P", dim: "SN", q: "คุณเชื่อมั่นในวิธีการที่ผ่านการพิสูจน์แล้วมากกว่าการทดลองทฤษฎีใหม่ที่ยังไม่แน่นอน" },
+            { id: 31, type: "S", dim: "SN", q: "เวลาทำงาน คุณชอบแก้ปัญหาเฉพาะหน้าด้วยเครื่องมือที่อยู่ตรงหน้าทันที" },
+            { id: 32, type: "P", dim: "SN", q: "คุณมักเกิดความรู้สึกปิ๊งแวบ (Intuitive Flash) เข้าใจโครงสร้างใหญ่โดยไม่ต้องอ่านรายละเอียดทั้งหมด" },
+            { id: 33, type: "S", dim: "SN", q: "คุณมักจะใช้สัญลักษณ์ คำอุปมาอุปไมย (Metaphor) ในการสื่อสารให้คนอื่นฟัง" },
+            { id: 34, type: "P", dim: "SN", q: "คุณรู้สึกหงุดหงิดเวลาที่ผู้คนพูดจาเพ้อฝันโดยไม่มีข้อมูลเชิงประจักษ์มารองรับ" },
+            { id: 35, type: "S", dim: "SN", q: "คุณชอบออกแบบวิธีการใหม่ๆ ที่แปลกไปจากเดิมเพื่อเอาชนะข้อจำกัดเดิมๆ" },
+            { id: 36, type: "P", dim: "SN", q: "คุณจดจำรายละเอียดของภาพ สถานที่ หรือสิ่งของรอบตัวได้อย่างละเอียดและแม่นยำ" },
+            { id: 37, type: "S", dim: "SN", q: "คุณมักจะชวนคนรอบข้างคุยเรื่องความหมายของชีวิตหรือเทรนด์ในอีก 10 ปีข้างหน้า" },
+            { id: 38, type: "P", dim: "SN", q: "คุณให้ความสำคัญกับ 'โลกตามที่เป็นจริง' มากกว่า 'โลกที่ควรจะเป็น'" },
+            { id: 39, type: "S", dim: "SN", q: "คุณชอบประดิษฐ์ ดัดแปลง หรือลงมือสร้างสิ่งของที่นำไปใช้งานจริงได้ทันที" },
+            { id: 40, type: "P", dim: "SN", q: "คุณมักสังเกตเห็นความเชื่อมโยงที่ซ่อนอยู่ (Patterns) ระหว่างเหตุการณ์สองเหตุการณ์ที่ดูไม่เกี่ยวกัน" },
+            { id: 41, type: "S", dim: "SN", q: "คุณมักเขียนหรือวาดรูปอธิบายความคิดออกมาเป็นภาพรวมแบบ Mind Map หรือกรอบทฤษฎี" },
+            { id: 42, type: "P", dim: "SN", q: "คุณชอบทำตามขั้นตอนคำแนะนำในคู่มือทีละขั้นเพื่อไม่ให้เกิดความผิดพลาด" },
+            { id: 43, type: "S", dim: "SN", q: "คุณชอบนำเสนอโครงการนวัตกรรมหรือแนวคิดริเริ่มที่ยังไม่เคยมีใครทำมาก่อน" },
+            { id: 44, type: "P", dim: "SN", q: "คุณสนใจอ่านบทความประวัติศาสตร์ ข้อเท็จจริง หรือข้อมูลวิทยาศาสตร์พื้นฐานมากกว่านิยายแนวเหนือธรรมชาติ" },
+            { id: 45, type: "S", dim: "SN", q: "คุณมักปล่อยให้ลางสังหรณ์ภายในนำทางในการตัดสินใจทำบางสิ่งออกไป" },
+            { id: 46, type: "P", dim: "SN", q: "คุณสังเกตเห็นทันทีเมื่อเสื้อผ้า ทรงผม หรือการจัดวางสิ่งของในห้องเปลี่ยนไปเล็กน้อย" },
+            { id: 47, type: "S", dim: "SN", q: "คุณมักจะตั้งคำถามหาเหตุผลเบื้องลึกและ 'ความหมายแฝง' ของสิ่งรอบตัวอยู่เสมอ" },
+            { id: 48, type: "P", dim: "SN", q: "คุณชอบความจริงใจที่จับต้องได้มากกว่าความโรแมนติกที่ไม่มีรากฐานบนความจริง" },
+            { id: 49, type: "S", dim: "SN", q: "คุณมักจะมองหาทางเลือกอื่นฉีกแนวออกไปแม้ว่าวิธีเดิมจะใช้งานได้ดีอยู่แล้ว" },
+            { id: 50, type: "P", dim: "SN", q: "คุณรู้สึกผ่อนคลายกับกิจกรรมที่ได้สัมผัสธรรมชาติหรือใช้ร่างกาย เช่น ออกกำลังกาย ทำอาหาร" },
+
+            // T vs F (51-75)
+            { id: 51, type: "P", dim: "TF", q: "เมื่อเกิดปัญหา คุณจะวิเคราะห์แยกแยะข้อเท็จจริงออกจากอารมณ์ความรู้สึกของคนก่อน" },
+            { id: 52, type: "S", dim: "TF", q: "คุณพูดวิจารณ์หรือชี้จุดบกพร่องตรงๆ เพื่อให้งานได้รับการแก้ไขอย่างมีประสิทธิภาพ" },
+            { id: 53, type: "P", dim: "TF", q: "คุณรับรู้และซึมซับความรู้สึกเจ็บปวดหรือความสุขของผู้อื่นเข้ามาในใจได้อย่างง่ายดาย" },
+            { id: 54, type: "S", dim: "TF", q: "คุณแสดงออกเพื่อประนีประนอมและรักษาความรู้สึกของคนในกลุ่มเอาไว้ก่อน" },
+            { id: 55, type: "P", dim: "TF", q: "คุณรู้สึกอึดอัดเมื่อเห็นคนรอบตัวใช้อารมณ์เหนือกฎเกณฑ์และเหตุผลในการตัดสินความถูกต้อง" },
+            { id: 56, type: "S", dim: "TF", q: "คุณใช้ตรรกะที่เป็นสากลและเด็ดขาดในการตัดสินใจ โดยตัดความสัมพันธ์ส่วนตัวออกไป" },
+            { id: 57, type: "P", dim: "TF", q: "คุณรับรู้ได้ทันทีว่าค่านิยมหรือความเชื่อมั่นภายในของใครบางคนกำลังโดนทำร้าย" },
+            { id: 58, type: "S", dim: "TF", q: "คุณมักจะแสดงความอบอุ่น ปลอบโยน และรับฟังผู้อื่นอย่างเป็นธรรมชาติเมื่อเขาเดือดร้อน" },
+            { id: 59, type: "P", dim: "TF", q: "คุณให้ความสำคัญกับความถูกต้องเที่ยงตรง (Truth) มากกว่าการประนีประนอมเพื่อความสบายใจ" },
+            { id: 60, type: "S", dim: "TF", q: "คุณยินดีปรับเปลี่ยนเป้าหมายของตนเองได้เพื่อให้เกิดความสุขและความกลมเกลียวรอบตัว" },
+            { id: 61, type: "P", dim: "TF", q: "คุณมักใช้เวลาวิเคราะห์ระบบการทำงานของสิ่งต่างๆ เช่น ซอฟต์แวร์ อุปกรณ์ หรือกฎระเบียบ" },
+            { id: 62, type: "S", dim: "TF", q: "คุณใช้เสียงหัวใจ ค่านิยมทางศีลธรรม และความรู้สึกส่วนตัวเป็นเข็มทิศหลักในการส่งสัญญาณเลือกทางเดิน" },
+            { id: 63, type: "P", dim: "TF", q: "คุณมองว่าการรักษาระเบียบและมาตรฐานที่เท่าเทียมกันคือความยุติธรรมที่สุด" },
+            { id: 64, type: "S", dim: "TF", q: "คุณให้คำชมผู้อื่นจากความรู้สึกซาบซึ้งใจในตัวตนของเขา มากกว่าชมตามหน้าที่" },
+            { id: 65, type: "P", dim: "TF", q: "คุณมักตั้งคำถามกับความสมเหตุสมผลของข้อตกลงต่างๆ ก่อนยอมรับมัน" },
+            { id: 66, type: "S", dim: "TF", q: "คุณหลีกเลี่ยงการพูดความจริงที่รุนแรงถ้าหากรู้ว่าจะทำให้คนฟังเสียใจอย่างมาก" },
+            { id: 67, type: "P", dim: "TF", q: "คุณประเมินค่าความสำเร็จจากประสิทธิภาพและผลลัพธ์ที่วัดผลได้จริง" },
+            { id: 68, type: "S", dim: "TF", q: "คุณชอบสร้างบรรยากาศที่ผ่อนคลายและเป็นมิตรในที่ทำงานมากกว่าความตึงเครียดเชิงแข่งขัน" },
+            { id: 69, type: "P", dim: "TF", q: "คุณสามารถตัดอารมณ์ออกไปและคิดวิเคราะห์ได้อย่างใจเย็นแม้จะอยู่ในสถานการณ์วิกฤต" },
+            { id: 70, type: "S", dim: "TF", q: "คุณสนับสนุนความฝันและแรงบันดาลใจของเพื่อนๆ อย่างเต็มที่แม้จะดูไม่สมเหตุสมผลก็ตาม" },
+            { id: 71, type: "P", dim: "TF", q: "คุณชอบการถกเถียง (Debate) ด้วยข้อมูลและเหตุผลเพื่อค้นหาคำตอบที่แท้จริง" },
+            { id: 72, type: "S", dim: "TF", q: "คุณมักแสดงความกตัญญูและเห็นคุณค่าในสิ่งเล็กๆ ที่คนอื่นตั้งใจมอบให้" },
+            { id: 73, type: "P", dim: "TF", q: "คุณมองว่าอารมณ์เป็นตัวแปรที่ควบคุมยากและอาจทำให้การตัดสินใจบิดเบือนจากความจริง" },
+            { id: 74, type: "S", dim: "TF", q: "คุณมักใช้อารมณ์ขันที่อบอุ่นเพื่อสลายความตึงเครียดในความสัมพันธ์" },
+            { id: 75, type: "P", dim: "TF", q: "คุณให้ความเคารพในความเชี่ยวชาญและความรู้ที่ถูกต้องตามหลักวิชาการ" },
+
+            // J vs P (76-100)
+            { id: 76, type: "P", dim: "JP", q: "คุณต้องการเห็นความชัดเจน แผนงาน และข้อสรุปที่แน่นอนก่อนลงมือทำ" },
+            { id: 77, type: "S", dim: "JP", q: "คุณจัดระเบียบ R่างเช็คลิสต์ และควบคุมพฤติกรรมของตัวเองให้อยู่ในตารางอย่างเข้มงวด" },
+            { id: 78, type: "P", dim: "JP", q: "คุณรู้สึกสบายใจท่ามกลางสถานการณ์ที่ยืดหยุ่น ปรับเปลี่ยนได้ และไม่มีกรอบตายตัว" },
+            { id: 79, type: "S", dim: "JP", q: "คุณชอบสุ่มทำสิ่งต่างๆ ตามสภาวะอารมณ์เฉพาะหน้าและปรับเปลี่ยนได้ตลอดเวลา" },
+            { id: 80, type: "P", dim: "JP", q: "คุณเกิดสภาวะเครียดหรือกังวลได้ง่ายเมื่อแผนการที่ล็อกไว้เกิดการเปลี่ยนแปลงกระทันหัน" },
+            { id: 81, type: "S", dim: "JP", q: "คุณชอบรีบตัดสินใจรีบปิดจบงานให้เสร็จสิ้นโดยเร็วที่สุดเพื่อลดความค้างคาในใจ" },
+            { id: 82, type: "P", dim: "JP", q: "คุณชอบเปิดรับตัวเลือกและไอเดียใหม่ๆ เข้ามาเรื่อยๆ แม้ข้อมูลที่มีจะพอแล้วก็ตาม" },
+            { id: 83, type: "S", dim: "JP", q: "คุณมักจะรอจนถึงนาทีสุดท้าย (Deadline) แล้วระเบิดพลังทำงานออกมารวดเดียว" },
+            { id: 84, type: "P", dim: "JP", q: "คุณมีความพึงพอใจสูงเมื่อชีวิตมีการวางระบบควบคุมและคาดเดาล่วงหน้าได้ชัดเจน" },
+            { id: 85, type: "S", dim: "JP", q: "คุณกำหนดเป้าหมายระยะยาวและลงมือขับเคลื่อนตัวเองตามแผนนั้นทีละขั้น" },
+            { id: 86, type: "P", dim: "JP", q: "คุณรู้สึกว่าระเบียบวินัยและตารางเวลาที่แน่นเกินไปเป็นการตีกรอบจำกัดอิสรภาพ" },
+            { id: 87, type: "S", dim: "JP", q: "คุณไม่มีปัญหากับการเปลี่ยนแผนท่องเที่ยวหรือแผนงานกลางคันถ้าเจออะไรที่น่าสนใจกว่า" },
+            { id: 88, type: "P", dim: "JP", q: "คุณมักจัดเตรียมสิ่งของ ค้นหาเส้นทาง และเตรียมความพร้อมอย่างละเอียดก่อนออกเดินทาง" },
+            { id: 89, type: "S", dim: "JP", q: "คุณจัดวางไฟล์งานในคอมพิวเตอร์หรือข้าวของในห้องแยกเป็นหมวดหมู่ที่ชัดเจนเสมอ" },
+            { id: 90, type: "P", dim: "JP", q: "คุณมองว่าความไม่แน่นอนคือโอกาสในการค้นพบสิ่งแปลกใหม่ที่น่าสนุก" },
+            { id: 91, type: "S", dim: "JP", q: "คุณชอบปล่อยให้ชีวิตดำเนินไปเรื่อยๆ (Go with the flow) มากกว่าขีดเส้นใต้ให้ตัวเอง" },
+            { id: 92, type: "P", dim: "JP", q: "คุณรู้สึกโล่งใจเมื่อโปรเจกต์หรืองานสลายตัวได้ข้อยุติเสร็จสิ้นสมบูรณ์" },
+            { id: 93, type: "S", dim: "JP", q: "คุณมักเคลียร์งานบ้านหรือหน้าที่รับผิดชอบเสร็จก่อนเวลาพักผ่อนเสมอ" },
+            { id: 94, type: "P", dim: "JP", q: "คุณชอบสะสมข้อมูลไปเรื่อยๆ และไม่รีบร้อนที่จะสรุปหรือเลือกทางใดทางหนึ่ง" },
+            { id: 95, type: "S", dim: "JP", q: "คุณมักจะนัดหมายแบบกว้างๆ เช่น 'ไว้เจอกันตอนบ่าย' แทนการล็อกเวลาเป๊ะๆ" },
+            { id: 96, type: "P", dim: "JP", q: "คุณรู้สึกว่าการมีกรอบกฎระเบียบที่แน่นอนช่วยให้สังคมทำงานได้อย่างปลอดภัย" },
+            { id: 97, type: "S", dim: "JP", q: "คุณชอบทำงานหลายๆ อย่างพร้อมกัน (Multitasking) ตามที่พลังงานในขณะนั้นจะพาไป" },
+            { id: 98, type: "P", dim: "JP", q: "คุณมักจะมาถึงก่อนเวลานัดหมายเสมอเพื่อป้องกันความคลาดเคลื่อนทางเวลา" },
+            { id: 99, type: "S", dim: "JP", q: "คุณชอบเขียนลิสต์สิ่งที่คุณต้องทำในแต่ละวันและมีความสุขเวลาได้ขีดฆ่ามันออก" },
+            { id: 100, type: "P", dim: "JP", q: "คุณมองว่าการตัดสินใจเร็วเกินไปมักทำให้เราพลาดข้อมูลที่สำคัญรอบตัว" }
+        ];
+
+        // MBTI Cognitive Functions Database mapping
+        const functionRegistry = {
+            "INFP": ["Fi", "Ne", "Si", "Te"], "INFJ": ["Ni", "Fe", "Ti", "Se"],
+            "INTP": ["Ti", "Ne", "Si", "Fe"], "INTJ": ["Ni", "Te", "Fi", "Se"],
+            "ISFP": ["Fi", "Se", "Ni", "Te"], "ISFJ": ["Si", "Fe", "Ti", "Ne"],
+            "ISTP": ["Ti", "Se", "Ni", "Fe"], "ISTJ": ["Si", "Te", "Fi", "Ne"],
+            "ENFP": ["Ne", "Fi", "Te", "Si"], "ENFJ": ["Fe", "Ni", "Se", "Ti"],
+            "ENTP": ["Ne", "Ti", "Fe", "Si"], "ENTJ": ["Te", "Ni", "Se", "Fi"],
+            "ESFP": ["Se", "Fi", "Te", "Ni"], "ESFJ": ["Fe", "Si", "Ne", "Ti"],
+            "ESTP": ["Se", "Ti", "Fe", "Ni"], "ESTJ": ["Te", "Si", "Ne", "Fi"]
+        };
+
+        // Mapping function labels to actual scores keys calculated from radar layout
+        function getFunctionValue(funcName, scores) {
+            switch(funcName) {
+                case "E":  return scores.EI.avgS;
+                case "I":  return scores.EI.avgP;
+                case "S":  return scores.SN.avgP;
+                case "N":  return scores.SN.avgS;
+                case "T":  return scores.TF.avgS;
+                case "F":  return scores.TF.avgP;
+                case "J":  return scores.JP.avgS;
+                case "P":  return scores.JP.avgP;
+                // Structural cognitive mapping heuristics
+                case "Fi": return scores.TF.avgP * 0.7 + scores.EI.avgP * 0.3;
+                case "Fe": return scores.TF.avgP * 0.7 + scores.EI.avgS * 0.3;
+                case "Ti": return scores.TF.avgS * 0.7 + scores.EI.avgP * 0.3;
+                case "Te": return scores.TF.avgS * 0.7 + scores.EI.avgS * 0.3;
+                case "Si": return scores.SN.avgP * 0.7 + scores.EI.avgP * 0.3;
+                case "Se": return scores.SN.avgP * 0.7 + scores.EI.avgS * 0.3;
+                case "Ni": return scores.SN.avgS * 0.7 + scores.EI.avgP * 0.3;
+                case "Ne": return scores.SN.avgS * 0.7 + scores.EI.avgS * 0.3;
+                default:   return 3.0;
+            }
+        }
+
+        // Reconstruct MBTI type from its core 4 functions layout back to 4 letters
+        function deriveTypeFromFunctions(f1, f2, f3, f4) {
+            let e_i = (f1.endsWith("i")) ? "I" : "E";
+            // Determine S/N based on perception functions location
+            let s_n = "N";
+            if (f1.startsWith("S") || f2.startsWith("S")) s_n = "S";
+            // Determine T/F based on judging functions location
+            let t_f = "F";
+            if (f1.startsWith("T") || f2.startsWith("T")) t_f = "T";
+            // Determine J/P code rule
+            let j_p = "P";
+            if (e_i === "I") {
+                if (f1.startsWith("J") || f1.startsWith("T") || f1.startsWith("F")) j_p = "J";
+            } else {
+                if (f1.startsWith("S") || f1.startsWith("N")) j_p = "P";
+                else j_p = "J";
+            }
+            
+            // Standard safety mapping lookup fallback
+            for (let type in functionRegistry) {
+                if (functionRegistry[type][0] === f1 && functionRegistry[type][1] === f2) {
+                    return type;
+                }
+            }
+            return e_i + s_n + t_f + j_p; // Structural proxy
+        }
+
+        // Global variable to keep track of chart instance
+        let radarChartInstance = null;
+
+        // Render 100 Questions Dynamic Update
+        const wrapper = document.getElementById('questions-wrapper');
+        questions.forEach((q) => {
+            const qDiv = document.createElement('div');
+            qDiv.className = "p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-2 transition duration-150 hover:border-gray-300 text-sm md:text-base";
+            qDiv.innerHTML = `
+                <div class="flex items-start">
+                    <span class="font-mono text-xs font-bold text-indigo-400 bg-white border border-indigo-200 px-2 py-0.5 rounded mr-3 mt-1">${q.id}</span>
+                    <p class="text-gray-900 font-medium">${q.q}</p>
+                </div>
+                <div class="flex justify-between items-center max-w-md ml-8 pt-1">
+                    <span class="text-xs text-gray-400">น้อยที่สุด</span>
+                    <div class="flex space-x-2">
+                        ${[1,2,3,4,5].map(v => `
+                            <div class="relative">
+                                <input type="radio" id="q_${q.id}_${v}" name="q_${q.id}" value="${v}" required 
+                                       class="likert-radio hidden" onChange="updateProgress()">
+                                <label for="q_${q.id}_${v}" class="w-8 h-8 flex items-center justify-center rounded-full border-2 border-gray-300 text-xs font-semibold cursor-pointer transition-all duration-150 text-gray-500 hover:border-indigo-400">
+                                    ${v}
+                                </label>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <span class="text-xs text-gray-400">มากที่สุด</span>
+                </div>
+            `;
+            wrapper.appendChild(qDiv);
+        });
+
+        function updateProgress() {
+            const formData = new FormData(document.getElementById('quiz-form'));
+            let answered = 0;
+            for(let pair of formData.entries()) { answered++; }
+            const pct = (answered / questions.length) * 100;
+            document.getElementById('progress-fill').style.width = pct + '%';
+        }
+
+        // Calculation Framework
+        function calculateResult() {
+            const form = document.getElementById('quiz-form');
+            const data = new FormData(form);
+
+            let scores = {
+                EI: { P: 0, S: 0, countP: 0, countS: 0 },
+                SN: { P: 0, S: 0, countP: 0, countS: 0 },
+                TF: { P: 0, S: 0, countP: 0, countS: 0 },
+                JP: { P: 0, S: 0, countP: 0, countS: 0 }
+            };
+
+            questions.forEach(q => {
+                const val = parseInt(data.get(`q_${q.id}`));
+                if (q.type === "P") {
+                    scores[q.dim].P += val;
+                    scores[q.dim].countP++;
+                } else {
+                    scores[q.dim].S += val;
+                    scores[q.dim].countS++;
+                }
+            });
+
+            // Derive Averages
+            let avgP = 0, avgS = 0;
+            for (let dim in scores) {
+                scores[dim].avgP = scores[dim].P / scores[dim].countP;
+                scores[dim].avgS = scores[dim].S / scores[dim].countS;
+                avgP += scores[dim].avgP;
+                avgS += scores[dim].avgS;
+            }
+            avgP /= 4;
+            avgS /= 4;
+
+            // Mathematical γ translation
+            let gamma_ii = avgP / (avgS || 1);
+            let gamma_ij = avgP / ((6 - avgS) || 1);
+
+            // Traditional Dichotomy Mapping
+            let mbti_E_I = (scores.EI.avgS >= scores.EI.avgP) ? "E" : "I";
+            let mbti_S_N = (scores.SN.avgP >= scores.SN.avgS) ? "S" : "N";
+            let mbti_T_F = (scores.TF.avgS >= scores.TF.avgP) ? "T" : "F";
+            let mbti_A_B = (scores.JP.avgS >= scores.JP.avgP) ? "J" : "P";
+            let primaryType = mbti_E_I + mbti_S_N + mbti_T_F + mbti_A_B;
+
+            // Extract baseline function stack for primary type
+            let baseStack = [...functionRegistry[primaryType]];
+
+            // Second-order divergence index calculation
+            let ei_gap = Math.abs(scores.EI.avgS - scores.EI.avgP);
+            let tf_gap = Math.abs(scores.TF.avgS - scores.TF.avgP);
+            let jp_gap = Math.abs(scores.JP.avgS - scores.JP.avgP);
+            let emotion_E = (ei_gap * 0.4) + (tf_gap * 0.4) + (jp_gap * 0.2);
+
+            // Display Base Scores
+            document.getElementById('m-gii').innerText = gamma_ii.toFixed(3);
+            document.getElementById('m-gij').innerText = gamma_ij.toFixed(3);
+            document.getElementById('m-p').innerText = avgP.toFixed(2);
+            document.getElementById('m-s').innerText = avgS.toFixed(2);
+            document.getElementById('primary-mbti').innerText = primaryType;
+            document.getElementById('emotion-e-val').innerText = emotion_E.toFixed(2);
+
+            // GRIP & LOOP ADVANCED ANALYSIS
+            const stateBadge = document.getElementById('state-badge');
+            const stateDesc = document.getElementById('state-description');
+            const remedySection = document.getElementById('remedy-section');
+            const remedyText = document.getElementById('remedy-text');
+
+            remedySection.classList.add('hidden');
+            let currentStatus = "NORMAL";
+
+            if (emotion_E > 1.65) {
+                currentStatus = "GRIP";
+                stateBadge.className = "inline-block px-4 py-2 rounded-xl text-white font-bold text-lg mb-4 bg-rose-600";
+                stateBadge.innerText = "🚨 สภาวะ: กำลังติด GRIP (วิกฤตฟังก์ชันด้อยครอบงำ)";
+                remedySection.classList.remove('hidden');
+
+                if (mbti_E_I === "I") {
+                    stateDesc.innerHTML = `ตรวจพบดัชนีอารมณ์สะสมเด่นชัด ระบบเกิดความบิดโค้งของเรขาคณิตขั้นรุนแรง ฟังก์ชันหลักภายในฝั่ง Introvert ของคุณเหนื่อยล้าจนพังทลายลงชั่วคราว จิตใต้สำนึกจึงผลักดันให้คุณถูกครอบงำด้วย <strong>ฟังก์ชันด้อยสาย Extraverted (Inferior Grip)</strong> ส่งผลให้คุณมีพฤติกรรมระเบิดอารมณ์ฉุนเฉียว ทำพฤติกรรมเสี่ยงๆ อย่างขาดสติ หรือพยายามควบคุมสิ่งแวดล้อมภายนอกอย่างบ้าคลั่งเพื่อชดเชยความอ่อนแอในใจ`;
+                    remedyText.innerHTML = `<strong>แนวทางการกู้คืน Vector:</strong> คุณต้องดึงฟังก์ชันหลักที่ปิดตัวลงไป (ค่าพลังงานต่ำสุด) กลับมาทำหน้าที่ในตำแหน่งที่ 1 โดยการหยุดส่งสัญญาณออกภายนอกชั่วคราว ปล่อยวางความเครียด ดึงตัวเองออกมาจากสิ่งเร้าเดิมๆ เพื่อเพิ่มคะแนนให้กับฟังก์ชันหลักประจำตัวคุณ`;
+                } else {
+                    stateDesc.innerHTML = `ตรวจพบดัชนีอารมณ์สะสมเด่นชัด ระบบเกิดสภาวะพลิกขั้วอย่างรุนแรง ฟังก์ชันการส่งสัญญาณภายนอกฝั่ง Extravert ของคุณเกิดภาวะโอลาหลชั่วคราว ส่งผลให้จิตใจคุณจมดิ่งและถูกครอบงำด้วย <strong>ฟังก์ชันด้อยสาย Introverted (Inferior Grip)</strong> จากคนที่ร่าเริงชอบเข้าสังคม คุณจะเปลี่ยนเป็นคนเก็บตัวเงียบกะทันหัน แยกตัวจากผู้คน ตกอยู่ในความหดหู่ ย้ำคิดย้ำทำ และเกิดความระแวงสิ่งรอบตัวหรือหวาดกลัวอนาคตอย่างไม่มีเหตุผล`;
+                    remedyText.innerHTML = `<strong>แนวทางการกู้คืน Vector:</strong> ห้ามฝืนเข้าสังคมเพื่อกลบปัญหา ให้เวลาตัวเองได้อยู่เงียบๆ ในพื้นที่ปลอดภัยส่วนตัว เพื่อบำบัดฟังก์ชันหลัก (Dominant) ที่คะแนนดิ่งต่ำสุดให้ฟื้นฟูคืนมานำทางพฤติกรรมในตำแหน่งแรกอีกครั้ง`;
+                }
+
+            } else if (emotion_E >= 0.95 && emotion_E <= 1.65) {
+                if (mbti_E_I === "I" && gamma_ii > 1.1) {
+                    currentStatus = "LOOP";
+                    stateBadge.className = "inline-block px-4 py-2 rounded-xl text-white font-bold text-lg mb-4 bg-amber-500";
+                    stateBadge.innerText = "🔄 สภาวะ: กำลังติด LOOP (วงจรปิดประมวลผลตัวเองภายใน)";
+                    stateDesc.innerHTML = `ตรวจพบสภาวะข้อมูลหมวนวนในวงรอบปิด คุณกำลังติดสภาวะ <strong>Dom-Tert Loop ของกลุ่มเก็บตัว</strong> พลังงานไหลวนอยู่เฉพาะฟังก์ชันการรับรู้และการคิดภายในตนเอง (Self-feedback loop $\\gamma_{ii}$ สูงเกินเกณฑ์) โดยมองข้ามฟังก์ชันรองในการปรับตัวสู่โลกภายนอก (Auxiliary Function) ทำให้คุณคิดฟุ้งซ่าน วนเวียนอยู่กับความระแวง หรือความผิดพลาดในอดีตจนเกิดอาการเฉื่อยชา ไม่ยอมตัดสินใจลงมือแก้ปัญหาในโลกความจริง`;
+                    remedySection.classList.remove('hidden');
+                    remedyText.innerHTML = `<strong>แนวทางการกู้คืน Vector:</strong> ดริฟต์พลังงานของคุณออกจากวงจรปิดโดยการ 'ซ่อมแซมฟังก์ชันที่ 2 (Auxiliary)' ที่มีค่าพลังงานต่ำที่สุดในระบบในขณะนี้ บังคับตัวเองให้มีกิจกรรมเปิดรับข้อมูลใหม่เพื่อขยายมิติทางปัญญาข้อที่สองกลับคืนมา`;
+
+                } else if (mbti_E_I === "E" && gamma_ii < 0.85) {
+                    currentStatus = "LOOP";
+                    stateBadge.className = "inline-block px-4 py-2 rounded-xl text-white font-bold text-lg mb-4 bg-amber-500";
+                    stateBadge.innerText = "🔄 สภาวะ: กำลังติด LOOP (วงจรเปิดกระจายสัญญาณอย่างไร้แรงต้าน)";
+                    stateDesc.innerHTML = `ตรวจพบสภาวะการส่งสัญญาณล้นเกินและไร้สมดุล คุณกำลังติดสภาวะ <strong>Dom-Tert Loop ของกลุ่มแสดงออก (Extraverted Loop)</strong> ระบบของคุณขาดแรงต้านทานสะท้อนคิดทบทวนภายใน ส่งผลให้คุณใช้ฟังก์ชันหลักคู่กับฟังก์ชันสามที่หันออกนอกทั้งหมด โดยมองข้ามฟังก์ชันรองที่เป็นโลกภายใน คุณจะวิ่งวุ่นทำกิจกรรมไม่หยุด แสวงหาความตื่นเต้นหรือผลลัพธ์ภายนอกอย่างบ้าคลั่ง ทำอะไรรวดเร็วเกินไปโดยไม่ยอมหยุดพักฟังเสียงความรู้สึกตัวเอง`;
+                    remedySection.classList.remove('hidden');
+                    remedyText.innerHTML = `<strong>แนวทางการกู้คืน Vector:</strong> คุณต้องกระตุ้นและดึงฟังก์ชันรองฝั่งเก็บตัว (Auxiliary) ที่คะแนนหดสั้นที่สุดกลับคืนมา โดยการหยุดทำกิจกรรมภายนอก ปิดโซเชียลมีเดีย แล้วใช้เวลาอยู่คนเดียวเงียบๆ ตกตะกอนเป้าหมายชีวิตแบบสันโดษ`;
+                } else {
+                    stateBadge.className = "inline-block px-4 py-2 rounded-xl text-white font-bold text-lg mb-4 bg-emerald-600";
+                    stateBadge.innerText = "✅ สภาวะ: สมดุลและเสถียร (Jury Stable)";
+                    stateDesc.innerHTML = `ระบบปฏิสัมพันธ์ของคุณอยู่ในเกณฑ์สอดคล้องคงตัว พลังงานกระแสไหลอารมณ์เคลื่อนที่ผ่านวิถีปกติ สภาวะทางจิตใจไม่มีแรงบิดโค้งที่อันตรายและสามารถแสดงจุดเด่นของบุคลิกภาพออกมาได้อย่างเป็นธรรมชาติ`;
+                }
+
+            } else {
+                stateBadge.className = "inline-block px-4 py-2 rounded-xl text-white font-bold text-lg mb-4 bg-emerald-600";
+                stateBadge.innerText = "✅ สภาวะ: สมดุลและเสถียร (Jury Stable)";
+                stateDesc.innerHTML = `ระบบปฏิสัมพันธ์ของคุณอยู่ในเกณฑ์สอดคล้องคงตัว พลังงานกระแสไหลอารมณ์เคลื่อนที่ผ่านวิถีปกติ สภาวะทางจิตใจไม่มีแรงบิดโค้งที่อันตรายและสามารถแสดงจุดเด่นของบุคลิกภาพออกมาได้อย่างเป็นธรรมชาติ`;
+            }
+
+            // Section 2: Core Reasons
+            let reasoning = `คุณได้รับการวินิจฉัยเป็นบุคลิกภาพกลุ่ม <strong>${primaryType}</strong> เนื่องจากพฤเบิกพิกัดสะท้อนความสัมพันธ์เชิงตรรกะในแบบจำลองดังนี้:<br><br>`;
+            if (gamma_ii > 1.0) {
+                reasoning += `• <strong>ค่า $\\gamma_{ii}$ ของคุณสูง (${gamma_ii.toFixed(2)} > 1.0):</strong> การรับรู้และการประมวลผลภายในตัวตน (Self-perception loop) มีค่าเหนือพลังการส่งสัญญาณออกภายนอก เป็นคุณลักษณะของกลุ่มสาย <strong>Introverted (${mbti_E_I})</strong><br>`;
+            } else {
+                reasoning += `• <strong>ค่า $\\gamma_{ii}$ ของคุณต่ำ (${gamma_ii.toFixed(2)} ≤ 1.0):</strong> ความเข้มข้นของการส่งสัญญาณแอคทีฟ มีค่าสูงกว่าระบบรับรู้สะท้อนคิดภายใน เป็นลักษณะของกลุ่มสาย <strong>Extraverted (${mbti_E_I})</strong><br>`;
+            }
+            if (mbti_T_F === "T") {
+                reasoning += `• <strong>ตัวสร้างกระแสตรรกะเด่น:</strong> ระบบพยายามปรับเสถียรค่าคงที่ผ่านเกณฑ์จำแนก ส่งผลให้วิถีของกระแสอารมณ์ของคุณมักคุมทิศทางให้อยู่ในขอบเขตความเสถียรได้ดี<br>`;
+            } else {
+                reasoning += `• <strong>ตัวสร้างกระแสอารมณ์แปรปรวน:</strong> ไวต่อการเปลี่ยนสถานะแบบขยับกว้าง ส่งผลให้เกิดความไวและเป็นวงรอบอารมณ์ตอบสนองอย่างรวดเร็วกับความรู้สึกแวดล้อม<br>`;
+            }
+            document.getElementById('analysis-reason').innerHTML = reasoning;
+
+
+            // --- TARGETED VECTOR REPAIR & MBTI DRIFT ANALYSIS ---
+            let futureStack = [...baseStack];
+            let driftAnalysisText = "";
+
+            // All possible functions to search for the absolute lowest value
+            let poolOfFunctions = ["Fi", "Fe", "Ti", "Te", "Si", "Se", "Ni", "Ne"];
+            let lowestFunction = poolOfFunctions[0];
+            let lowestValue = 999;
+
+            poolOfFunctions.forEach(f => {
+                let currentVal = getFunctionValue(f, scores);
+                if (currentVal < lowestValue) {
+                    lowestValue = currentVal;
+                    lowestFunction = f;
+                }
+            });
+
+            if (currentStatus === "GRIP") {
+                // -หากผู้ตอบแบบสอบถามได้เงื่อนไขของการ "ติด Grip" ให้แก้ Grip โดยดึงฟังก์ชันที่ต่ำสุดมาแทนเป็นฟังก์ชันตัวที่ 1
+                let oldF1 = futureStack[0];
+                futureStack[0] = lowestFunction; // แทนที่ตำแหน่งที่ 1 ด้วยฟังก์ชันที่ต่ำที่สุดเพื่อฟื้นฟู
+                
+                let driftType = deriveTypeFromFunctions(futureStack[0], futureStack[1], futureStack[2], futureStack[3]);
+                document.getElementById('future-mbti').innerText = driftType;
+
+                driftAnalysisText = `เนื่องจากระบบตรวจพบสภาวะวิกฤต <strong>Grip Breakdown</strong> ซึ่งส่งผลให้กัปตันหลักตัวที่ 1 (${oldF1}) นิ่งสนิทและปิดตัวลง (มีค่าระดับพลังงานทรุดฮวบต่ำสุด)<br><br>`;
+                driftAnalysisText += `กลไกการเยียวยาพิกัดในอนาคต (MBTI Drift Analysis) จึงทำงานโดยการเร่งดึงฟังก์ชันที่มีพลังงานต่ำสุดคือ <strong>${lowestFunction}</strong> ขึ้นมาประจำตำแหน่งที่ 1 เพื่อทำหน้าที่เป็นเสาหลักใหม่ชดเชยวิถีพฤติกรรม ผลลัพธ์จากการปรับโมเดลฟังก์ชันใหม่นี้จะดริฟต์โครงสร้างบุคลิกภาพในอนาคตของคุณไปสู่ไทป์ทางเลือกคือ <strong>${driftType}</strong> ทำให้คุณเปลี่ยนผ่านไปสู่โหมดชีวิตที่มีความเด็ดเดี่ยวในทางที่ขาดหายไปครับ`;
+
+            } else if (currentStatus === "LOOP") {
+                // -หากผู้ตอบแบบสอบถามได้เงื่อนไขของการ "ติด Loop" ให้แก้ Loop โดยดึงฟังก์ชันตัวที่ต่ำสุดขึ้นมาแทนเป็นฟังก์ชันตัวที่ 2
+                let oldF2 = futureStack[1];
+                futureStack[1] = lowestFunction; // แทนที่ตำแหน่งที่ 2 ด้วยฟังก์ชันที่ต่ำที่สุดเพื่อกู้คืนสะพานสมดุล
+                
+                let driftType = deriveTypeFromFunctions(futureStack[0], futureStack[1], futureStack[2], futureStack[3]);
+                document.getElementById('future-mbti').innerText = driftType;
+
+                driftAnalysisText = `เนื่องจากระบบตรวจพบสภาวะข้อมูลหมุนวน <strong>Loop Blockade</strong> ซึ่งเกิดจากการข้ามและตัดสัญญาณของฟังก์ชันรองตัวที่ 2 (${oldF2}) จนทำให้ระบบสะท้อนค่ากุดต่ำที่สุดบนพิกัดเรดาร์ชาร์ต<br><br>`;
+                driftAnalysisText += `กลไกการแก้ปัญหาจึงจำเป็นต้องสวมบทบาทดึงเอาฟังก์ชันที่ดิ่งต่ำสุดในสารบบคือ <strong>${lowestFunction}</strong> ขึ้นมาสอดแทรกทำหน้าที่ในตำแหน่งที่ 2 แทนเพื่อทำลายวงจรปิดปิดกั้นตนเอง ผลลัพธ์ทำให้แนวโน้มบุคลิกภาพเกิดการ Drift ปรับเปลี่ยนพิกัดโครงสร้างตรรกะพฤติกรรมไปเป็นไทป์ <strong>${driftType}</strong> ซึ่งเป็นเวอร์ชันที่ก้าวข้ามลูปเดิมและสร้างสะพานเชื่อมสมดุลภายใน-ภายนอกใหม่สำเร็จครับ`;
+
+            } else {
+                // NORMAL/STABLE STATE: Predict normal maturation drift (Shadow integration / Balancing)
+                let driftType = (mbti_E_I === "I") ? "E" : "I";
+                driftType += mbti_S_N === "S" ? "N" : "S"; // Fixed S/N bug here as well!
+                driftType += (mbti_T_F === "F") ? "T" : "F";
+                driftType += (mbti_A_B === "J") ? "P" : "J";
+                
+                document.getElementById('future-mbti').innerText = driftType;
+                driftAnalysisText = `ระบบทำงานอยู่ในระดับสมดุลและเสถียรดีมาก ไม่พบความเสียหายในเวกเตอร์ฟังก์ชันจิตวิทยาใดๆ ดังนั้นเมื่อเวลาผ่านไปและระบบของคุณเข้าสู่กระบวนการปล่อยวางทางอารมณ์ตามปกติ จิตใจของคุณจะพัฒนาไปตามการหลอมรวมไทป์เงา (Shadow Integration) ตามธรรมชาติ ส่งผลให้มีแนวโน้มแสดงคุณลักษณะพฤติกรรมในขอบเขตของไทป์ <strong>${driftType}</strong> ได้อย่างยืดหยุ่นและกว้างขวางมากขึ้นเมื่ออายุมากขึ้นครับ`;
+            }
+
+            document.getElementById('future-reason').innerHTML = driftAnalysisText;
+
+            // --- GENERATE RADAR CHART ---
+            renderRadarChart(scores);
+
+            // Smooth Scroll into display
+            const resContainer = document.getElementById('result-container');
+            resContainer.classList.remove('hidden');
+            resContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Function to handle Chart.js Radar logic
+        function renderRadarChart(scores) {
+            const ctx = document.getElementById('mbtiRadarChart').getContext('2d');
+            
+            const labels = [
+                'Extraversion (E)', 
+                'Sensing (S)', 
+                'Thinking (T)', 
+                'Judging (J)', 
+                'Introversion (I)', 
+                'Intuition (N)', 
+                'Feeling (F)', 
+                'Perception (P)'
+            ];
+
+            const dataValues = [
+                scores.EI.avgS, // E Axis
+                scores.SN.avgP, // S Axis
+                scores.TF.avgS, // T Axis
+                scores.JP.avgS, // J Axis
+                scores.EI.avgP, // I Axis
+                scores.SN.avgS, // N Axis
+                scores.TF.avgP, // F Axis
+                scores.JP.avgP  // P Axis
+            ];
+
+            if (radarChartInstance !== null) {
+                radarChartInstance.destroy();
+            }
+
+            radarChartInstance = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'พิกัดพลังงานจำลองตัวตนของคุณ',
+                        data: dataValues,
+                        backgroundColor: 'rgba(79, 70, 229, 0.2)',
+                        borderColor: 'rgba(79, 70, 229, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(79, 70, 229, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(79, 70, 229, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            suggestedMin: 1,
+                            suggestedMax: 5,
+                            ticks: {
+                                stepSize: 1,
+                                color: '#9ca3af'
+                            },
+                            pointLabels: {
+                                font: {
+                                    size: 13,
+                                    weight: 'bold'
+                                },
+                                color: '#1e1b4b'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
