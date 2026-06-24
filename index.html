@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MBTI Psychophysical Interaction & Grip/Loop Detector (γ-Model v2.6)</title>
+    <title>MBTI Psychophysical Interaction & Grip/Loop Detector (γ-Model v2.6 - Fixed)</title>
     <!-- Tailwind CSS for modern UI -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js for Radar Chart -->
@@ -67,19 +67,19 @@
                 <h3 class="text-lg font-bold text-gray-900 mb-4 text-center">ค่าดัชนีเรขาคณิตปฏิสัมพันธ์จำลอง ($\gamma$-Matrix)</h3>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center font-mono">
                     <div class="p-3 bg-white rounded-xl shadow-sm">
-                        <span class="block text-xs text-gray-550">$\gamma_{ii}$ (Self-Feedback)</span>
+                        <span class="block text-xs text-gray-500">$\gamma_{ii}$ (Self-Feedback)</span>
                         <span id="m-gii" class="text-lg font-bold text-indigo-600">0.00</span>
                     </div>
                     <div class="p-3 bg-white rounded-xl shadow-sm">
-                        <span class="block text-xs text-gray-550">$\gamma_{ij}$ (Cross-Perception)</span>
+                        <span class="block text-xs text-gray-500">$\gamma_{ij}$ (Cross-Perception)</span>
                         <span id="m-gij" class="text-lg font-bold text-green-600">0.00</span>
                     </div>
                     <div class="p-3 bg-white rounded-xl shadow-sm">
-                        <span class="block text-xs text-gray-550">ค่าการรับรู้ ($P$)</span>
+                        <span class="block text-xs text-gray-500">ค่าการรับรู้ ($P$)</span>
                         <span id="m-p" class="text-lg font-bold text-amber-600">0.00</span>
                     </div>
                     <div class="p-3 bg-white rounded-xl shadow-sm">
-                        <span class="block text-xs text-gray-550">ค่าการแสดงออก ($S$)</span>
+                        <span class="block text-xs text-gray-500">ค่าการแสดงออก ($S$)</span>
                         <span id="m-s" class="text-lg font-bold text-rose-600">0.00</span>
                     </div>
                 </div>
@@ -117,11 +117,10 @@
             <div class="border-t border-gray-200 pt-6 space-y-4">
                 <h3 class="text-lg font-bold text-rose-700">การวิเคราะห์แนวโน้มการเปลี่ยนแปลงในอนาคต (MBTI Drift Analysis)</h3>
                 <p class="text-gray-600 text-sm">
-                    ภายใต้ทฤษฎีอารมณ์ลำดับที่สอง เมื่อระบบเข้าสู่สภาวะปล่อยวางทางอารมณ์ (Emotional Relaxation) 
-                    ค่าตัวสร้างกระแส ($M$) จะแปรผันตามเวลา $m_{ii}(t) = \frac{1}{t+\tau_i}$ ส่งผลให้โครงสร้าง $\gamma = e^{M\Delta t}$ เกิดการขยับพิกัดในอนาคต
+                    ภายใต้ทฤษฎีอารมณ์ลำดับที่สอง เมื่อระบบตรวจพบสภาวะการทำงานผิดพลาดเฉพาะจุด (Anomalous Vector Breakdown) ตัวแปรในเมทริกซ์กระแสไหลจะคำนวณการซ่อมแซมพิกัดดัชนีที่ดิ่งต่ำสุดเพื่อกู้คืนสมดุลให้ระบบกลับมาเสถียร
                 </p>
                 <div class="bg-rose-50 border-l-4 border-rose-500 p-4 rounded-r-xl">
-                    <p class="font-semibold text-rose-950 mb-2">ไทป์ทางเลือกที่มีแนวโน้มจะเป็นไปได้ในอนาคตเมื่อจิตใจเข้าสู่สมดุล:</p>
+                    <p class="font-semibold text-rose-950 mb-2">ไทป์ทางเลือกที่มีแนวโน้มจะเป็นไปได้ในอนาคตเมื่อจิตใจได้รับการเยียวยาแก้ไขพิกัด:</p>
                     <div id="future-mbti" class="text-2xl font-bold text-rose-600 tracking-wide mb-3">XXXX</div>
                     <div id="future-reason" class="text-gray-700 text-sm leading-relaxed">
                         <!-- Future trend analysis -->
@@ -202,7 +201,7 @@
             { id: 55, type: "P", dim: "TF", q: "คุณรู้สึกอึดอัดเมื่อเห็นคนรอบตัวใช้อารมณ์เหนือกฎเกณฑ์และเหตุผลในการตัดสินความถูกต้อง" },
             { id: 56, type: "S", dim: "TF", q: "คุณใช้ตรรกะที่เป็นสากลและเด็ดขาดในการตัดสินใจ โดยตัดความสัมพันธ์ส่วนตัวออกไป" },
             { id: 57, type: "P", dim: "TF", q: "คุณรับรู้ได้ทันทีว่าค่านิยมหรือความเชื่อมั่นภายในของใครบางคนกำลังโดนทำร้าย" },
-            { id: 58, text: "S", dim: "TF", q: "คุณมักจะแสดงความอบอุ่น ปลอบโยน และรับฟังผู้อื่นอย่างเป็นธรรมชาติเมื่อเขาเดือดร้อน" },
+            { id: 58, type: "S", dim: "TF", q: "คุณมักจะแสดงความอบอุ่น ปลอบโยน และรับฟังผู้อื่นอย่างเป็นธรรมชาติเมื่อเขาเดือดร้อน" },
             { id: 59, type: "P", dim: "TF", q: "คุณให้ความสำคัญกับความถูกต้องเที่ยงตรง (Truth) มากกว่าการประนีประนอมเพื่อความสบายใจ" },
             { id: 60, type: "S", dim: "TF", q: "คุณยินดีปรับเปลี่ยนเป้าหมายของตนเองได้เพื่อให้เกิดความสุขและความกลมเกลียวรอบตัว" },
             { id: 61, type: "P", dim: "TF", q: "คุณมักใช้เวลาวิเคราะห์ระบบการทำงานของสิ่งต่างๆ เช่น ซอฟต์แวร์ อุปกรณ์ หรือกฎระเบียบ" },
@@ -223,7 +222,7 @@
 
             // J vs P (76-100)
             { id: 76, type: "P", dim: "JP", q: "คุณต้องการเห็นความชัดเจน แผนงาน และข้อสรุปที่แน่นอนก่อนลงมือทำ" },
-            { id: 77, type: "S", dim: "JP", q: "คุณจัดระเบียบ ร่างเช็คลิสต์ และควบคุมพฤติกรรมของตัวเองให้อยู่ในตารางอย่างเข้มงวด" },
+            { id: 77, type: "S", dim: "JP", q: "คุณจัดระเบียบ R่างเช็คลิสต์ และควบคุมพฤติกรรมของตัวเองให้อยู่ในตารางอย่างเข้มงวด" },
             { id: 78, type: "P", dim: "JP", q: "คุณรู้สึกสบายใจท่ามกลางสถานการณ์ที่ยืดหยุ่น ปรับเปลี่ยนได้ และไม่มีกรอบตายตัว" },
             { id: 79, type: "S", dim: "JP", q: "คุณชอบสุ่มทำสิ่งต่างๆ ตามสภาวะอารมณ์เฉพาะหน้าและปรับเปลี่ยนได้ตลอดเวลา" },
             { id: 80, type: "P", dim: "JP", q: "คุณเกิดสภาวะเครียดหรือกังวลได้ง่ายเมื่อแผนการที่ล็อกไว้เกิดการเปลี่ยนแปลงกระทันหัน" },
@@ -248,6 +247,69 @@
             { id: 99, type: "S", dim: "JP", q: "คุณชอบเขียนลิสต์สิ่งที่คุณต้องทำในแต่ละวันและมีความสุขเวลาได้ขีดฆ่ามันออก" },
             { id: 100, type: "P", dim: "JP", q: "คุณมองว่าการตัดสินใจเร็วเกินไปมักทำให้เราพลาดข้อมูลที่สำคัญรอบตัว" }
         ];
+
+        // MBTI Cognitive Functions Database mapping
+        const functionRegistry = {
+            "INFP": ["Fi", "Ne", "Si", "Te"], "INFJ": ["Ni", "Fe", "Ti", "Se"],
+            "INTP": ["Ti", "Ne", "Si", "Fe"], "INTJ": ["Ni", "Te", "Fi", "Se"],
+            "ISFP": ["Fi", "Se", "Ni", "Te"], "ISFJ": ["Si", "Fe", "Ti", "Ne"],
+            "ISTP": ["Ti", "Se", "Ni", "Fe"], "ISTJ": ["Si", "Te", "Fi", "Ne"],
+            "ENFP": ["Ne", "Fi", "Te", "Si"], "ENFJ": ["Fe", "Ni", "Se", "Ti"],
+            "ENTP": ["Ne", "Ti", "Fe", "Si"], "ENTJ": ["Te", "Ni", "Se", "Fi"],
+            "ESFP": ["Se", "Fi", "Te", "Ni"], "ESFJ": ["Fe", "Si", "Ne", "Ti"],
+            "ESTP": ["Se", "Ti", "Fe", "Ni"], "ESTJ": ["Te", "Si", "Ne", "Fi"]
+        };
+
+        // Mapping function labels to actual scores keys calculated from radar layout
+        function getFunctionValue(funcName, scores) {
+            switch(funcName) {
+                case "E":  return scores.EI.avgS;
+                case "I":  return scores.EI.avgP;
+                case "S":  return scores.SN.avgP;
+                case "N":  return scores.SN.avgS;
+                case "T":  return scores.TF.avgS;
+                case "F":  return scores.TF.avgP;
+                case "J":  return scores.JP.avgS;
+                case "P":  return scores.JP.avgP;
+                // Structural cognitive mapping heuristics
+                case "Fi": return scores.TF.avgP * 0.7 + scores.EI.avgP * 0.3;
+                case "Fe": return scores.TF.avgP * 0.7 + scores.EI.avgS * 0.3;
+                case "Ti": return scores.TF.avgS * 0.7 + scores.EI.avgP * 0.3;
+                case "Te": return scores.TF.avgS * 0.7 + scores.EI.avgS * 0.3;
+                case "Si": return scores.SN.avgP * 0.7 + scores.EI.avgP * 0.3;
+                case "Se": return scores.SN.avgP * 0.7 + scores.EI.avgS * 0.3;
+                case "Ni": return scores.SN.avgS * 0.7 + scores.EI.avgP * 0.3;
+                case "Ne": return scores.SN.avgS * 0.7 + scores.EI.avgS * 0.3;
+                default:   return 3.0;
+            }
+        }
+
+        // Reconstruct MBTI type from its core 4 functions layout back to 4 letters
+        function deriveTypeFromFunctions(f1, f2, f3, f4) {
+            let e_i = (f1.endsWith("i")) ? "I" : "E";
+            // Determine S/N based on perception functions location
+            let s_n = "N";
+            if (f1.startsWith("S") || f2.startsWith("S")) s_n = "S";
+            // Determine T/F based on judging functions location
+            let t_f = "F";
+            if (f1.startsWith("T") || f2.startsWith("T")) t_f = "T";
+            // Determine J/P code rule
+            let j_p = "P";
+            if (e_i === "I") {
+                if (f1.startsWith("J") || f1.startsWith("T") || f1.startsWith("F")) j_p = "J";
+            } else {
+                if (f1.startsWith("S") || f1.startsWith("N")) j_p = "P";
+                else j_p = "J";
+            }
+            
+            // Standard safety mapping lookup fallback
+            for (let type in functionRegistry) {
+                if (functionRegistry[type][0] === f1 && functionRegistry[type][1] === f2) {
+                    return type;
+                }
+            }
+            return e_i + s_n + t_f + j_p; // Structural proxy
+        }
 
         // Global variable to keep track of chart instance
         let radarChartInstance = null;
@@ -289,7 +351,7 @@
             document.getElementById('progress-fill').style.width = pct + '%';
         }
 
-        // Rigorous calculation framework with Emotion Observable tracking
+        // Calculation Framework
         function calculateResult() {
             const form = document.getElementById('quiz-form');
             const data = new FormData(form);
@@ -334,12 +396,13 @@
             let mbti_A_B = (scores.JP.avgS >= scores.JP.avgP) ? "J" : "P";
             let primaryType = mbti_E_I + mbti_S_N + mbti_T_F + mbti_A_B;
 
-            // Advanced: Calculate Emotion Observable Metric E(t) = dot(M) + M^2
+            // Extract baseline function stack for primary type
+            let baseStack = [...functionRegistry[primaryType]];
+
+            // Second-order divergence index calculation
             let ei_gap = Math.abs(scores.EI.avgS - scores.EI.avgP);
             let tf_gap = Math.abs(scores.TF.avgS - scores.TF.avgP);
             let jp_gap = Math.abs(scores.JP.avgS - scores.JP.avgP);
-            
-            // Emotion quantity represents second-order divergence
             let emotion_E = (ei_gap * 0.4) + (tf_gap * 0.4) + (jp_gap * 0.2);
 
             // Display Base Scores
@@ -357,35 +420,38 @@
             const remedyText = document.getElementById('remedy-text');
 
             remedySection.classList.add('hidden');
+            let currentStatus = "NORMAL";
 
-            // --- GRIP & LOOP DETECTOR FOR BOTH EXTRAVERTS AND INTROVERTS ---
             if (emotion_E > 1.65) {
+                currentStatus = "GRIP";
                 stateBadge.className = "inline-block px-4 py-2 rounded-xl text-white font-bold text-lg mb-4 bg-rose-600";
-                stateBadge.innerText = "🚨 สภาวะ: กำลังติด GRIP (วิกฤตฟังก์ชันด้อย)";
+                stateBadge.innerText = "🚨 สภาวะ: กำลังติด GRIP (วิกฤตฟังก์ชันด้อยครอบงำ)";
                 remedySection.classList.remove('hidden');
 
                 if (mbti_E_I === "I") {
                     stateDesc.innerHTML = `ตรวจพบดัชนีอารมณ์สะสมเด่นชัด ระบบเกิดความบิดโค้งของเรขาคณิตขั้นรุนแรง ฟังก์ชันหลักภายในฝั่ง Introvert ของคุณเหนื่อยล้าจนพังทลายลงชั่วคราว จิตใต้สำนึกจึงผลักดันให้คุณถูกครอบงำด้วย <strong>ฟังก์ชันด้อยสาย Extraverted (Inferior Grip)</strong> ส่งผลให้คุณมีพฤติกรรมระเบิดอารมณ์ฉุนเฉียว ทำพฤติกรรมเสี่ยงๆ อย่างขาดสติ หรือพยายามควบคุมสิ่งแวดล้อมภายนอกอย่างบ้าคลั่งเพื่อชดเชยความอ่อนแอในใจ`;
-                    remedyText.innerHTML = `ต้องลดค่าความเร่งอารมณ์ลงโดยทันทีโดยการเข้าสู่สภาวะผ่อนคลาย หยุดส่งสัญญาณออกภายนอกชั่วคราว ปล่อยวางความเครียดดึงตัวออกมาจากสิ่งเร้าเดิมๆ หันมาทำกิจกรรมทางกายภาพที่ง่ายและผ่อนคลาย (เช่น นอนหลับ พักผ่อน เดินเล่นเงียบๆ)`;
+                    remedyText.innerHTML = `<strong>แนวทางการกู้คืน Vector:</strong> คุณต้องดึงฟังก์ชันหลักที่ปิดตัวลงไป (ค่าพลังงานต่ำสุด) กลับมาทำหน้าที่ในตำแหน่งที่ 1 โดยการหยุดส่งสัญญาณออกภายนอกชั่วคราว ปล่อยวางความเครียด ดึงตัวเองออกมาจากสิ่งเร้าเดิมๆ เพื่อเพิ่มคะแนนให้กับฟังก์ชันหลักประจำตัวคุณ`;
                 } else {
                     stateDesc.innerHTML = `ตรวจพบดัชนีอารมณ์สะสมเด่นชัด ระบบเกิดสภาวะพลิกขั้วอย่างรุนแรง ฟังก์ชันการส่งสัญญาณภายนอกฝั่ง Extravert ของคุณเกิดภาวะโอลาหลชั่วคราว ส่งผลให้จิตใจคุณจมดิ่งและถูกครอบงำด้วย <strong>ฟังก์ชันด้อยสาย Introverted (Inferior Grip)</strong> จากคนที่ร่าเริงชอบเข้าสังคม คุณจะเปลี่ยนเป็นคนเก็บตัวเงียบกะทันหัน แยกตัวจากผู้คน ตกอยู่ในความหดหู่ ย้ำคิดย้ำทำ และเกิดความระแวงสิ่งรอบตัวหรือหวาดกลัวอนาคตอย่างไม่มีเหตุผล`;
-                    remedyText.innerHTML = `แนวทางแก้ไขเชิงกลไก: อย่าเพิ่งบังคับตัวเองให้ฝืนออกไปเข้าสังคม ให้เวลาตัวเองได้อยู่เงียบๆ ในพื้นที่ปลอดภัยส่วนตัว ทำกิจกรรมที่ใช้การวิเคราะห์ระบบปิดเบาๆ (เช่น จัดห้องเงียบๆ แยกไฟล์ในคอมพิวเตอร์ หรืออ่านหนังสือเล่มโปรด)เพื่อสร้างความเสถียรคืนมา`;
+                    remedyText.innerHTML = `<strong>แนวทางการกู้คืน Vector:</strong> ห้ามฝืนเข้าสังคมเพื่อกลบปัญหา ให้เวลาตัวเองได้อยู่เงียบๆ ในพื้นที่ปลอดภัยส่วนตัว เพื่อบำบัดฟังก์ชันหลัก (Dominant) ที่คะแนนดิ่งต่ำสุดให้ฟื้นฟูคืนมานำทางพฤติกรรมในตำแหน่งแรกอีกครั้ง`;
                 }
 
             } else if (emotion_E >= 0.95 && emotion_E <= 1.65) {
                 if (mbti_E_I === "I" && gamma_ii > 1.1) {
+                    currentStatus = "LOOP";
                     stateBadge.className = "inline-block px-4 py-2 rounded-xl text-white font-bold text-lg mb-4 bg-amber-500";
                     stateBadge.innerText = "🔄 สภาวะ: กำลังติด LOOP (วงจรปิดประมวลผลตัวเองภายใน)";
-                    stateDesc.innerHTML = `ตรวจพบสภาวะข้อมูลหมุนวนในวงรอบปิด คุณกำลังติดสภาวะ <strong>Dom-Tert Loop ของกลุ่มเก็บตัว</strong> พลังงานไหลวนอยู่เฉพาะฟังก์ชันการรับรู้และการคิดภายในตนเอง (Self-feedback loop $\\gamma_{ii}$ สูงเกินเกณฑ์) โดยมองข้ามฟังก์ชันรองในการปรับตัวสู่โลกภายนอก (Auxiliary Function) ทำให้คุณคิดฟุ้งซ่าน วนเวียนอยู่กับความระแวง หรือความผิดพลาดในอดีตจนเกิดอาการเฉื่อยชา ไม่ยอมตัดสินใจลงมือแก้ปัญหาในโลกความจริง`;
+                    stateDesc.innerHTML = `ตรวจพบสภาวะข้อมูลหมวนวนในวงรอบปิด คุณกำลังติดสภาวะ <strong>Dom-Tert Loop ของกลุ่มเก็บตัว</strong> พลังงานไหลวนอยู่เฉพาะฟังก์ชันการรับรู้และการคิดภายในตนเอง (Self-feedback loop $\\gamma_{ii}$ สูงเกินเกณฑ์) โดยมองข้ามฟังก์ชันรองในการปรับตัวสู่โลกภายนอก (Auxiliary Function) ทำให้คุณคิดฟุ้งซ่าน วนเวียนอยู่กับความระแวง หรือความผิดพลาดในอดีตจนเกิดอาการเฉื่อยชา ไม่ยอมตัดสินใจลงมือแก้ปัญหาในโลกความจริง`;
                     remedySection.classList.remove('hidden');
-                    remedyText.innerHTML = `คุณจำเป็นต้องเปิดรับข้อมูลใหม่ภายนอกด้วยการออกไปพูดคุยแลกเปลี่ยนกับคนอื่น หรือลงมือทำกิจกรรมที่บังคับให้สมองต้องตอบสนองต่อโลกภายนอกทันทีเพื่อตัดวงจรปิด (Feedback Loop) นี้ออกไป`;
+                    remedyText.innerHTML = `<strong>แนวทางการกู้คืน Vector:</strong> ดริฟต์พลังงานของคุณออกจากวงจรปิดโดยการ 'ซ่อมแซมฟังก์ชันที่ 2 (Auxiliary)' ที่มีค่าพลังงานต่ำที่สุดในระบบในขณะนี้ บังคับตัวเองให้มีกิจกรรมเปิดรับข้อมูลใหม่เพื่อขยายมิติทางปัญญาข้อที่สองกลับคืนมา`;
 
                 } else if (mbti_E_I === "E" && gamma_ii < 0.85) {
+                    currentStatus = "LOOP";
                     stateBadge.className = "inline-block px-4 py-2 rounded-xl text-white font-bold text-lg mb-4 bg-amber-500";
                     stateBadge.innerText = "🔄 สภาวะ: กำลังติด LOOP (วงจรเปิดกระจายสัญญาณอย่างไร้แรงต้าน)";
                     stateDesc.innerHTML = `ตรวจพบสภาวะการส่งสัญญาณล้นเกินและไร้สมดุล คุณกำลังติดสภาวะ <strong>Dom-Tert Loop ของกลุ่มแสดงออก (Extraverted Loop)</strong> ระบบของคุณขาดแรงต้านทานสะท้อนคิดทบทวนภายใน ส่งผลให้คุณใช้ฟังก์ชันหลักคู่กับฟังก์ชันสามที่หันออกนอกทั้งหมด โดยมองข้ามฟังก์ชันรองที่เป็นโลกภายใน คุณจะวิ่งวุ่นทำกิจกรรมไม่หยุด แสวงหาความตื่นเต้นหรือผลลัพธ์ภายนอกอย่างบ้าคลั่ง ทำอะไรรวดเร็วเกินไปโดยไม่ยอมหยุดพักฟังเสียงความรู้สึกตัวเอง`;
                     remedySection.classList.remove('hidden');
-                    remedyText.innerHTML = `คุณจำเป็นต้องเพิ่มค่าความต้านทานภายในให้ระบบ โดยการบังคับตัวเองให้หยุดทำกิจกรรมภายนอกชั่วคราว ปิดโซเชียลมีเดีย แล้วใช้เวลาอยู่คนเดียวเงียบๆ ทำกิจกรรมสะท้อนคิด เช่น การเขียนบันทึกประจำวัน (Journaling) หรือนั่งตกตะกอนเป้าหมายชีวิตแบบสันโดษ`;
+                    remedyText.innerHTML = `<strong>แนวทางการกู้คืน Vector:</strong> คุณต้องกระตุ้นและดึงฟังก์ชันรองฝั่งเก็บตัว (Auxiliary) ที่คะแนนหดสั้นที่สุดกลับคืนมา โดยการหยุดทำกิจกรรมภายนอก ปิดโซเชียลมีเดีย แล้วใช้เวลาอยู่คนเดียวเงียบๆ ตกตะกอนเป้าหมายชีวิตแบบสันโดษ`;
                 } else {
                     stateBadge.className = "inline-block px-4 py-2 rounded-xl text-white font-bold text-lg mb-4 bg-emerald-600";
                     stateBadge.innerText = "✅ สภาวะ: สมดุลและเสถียร (Jury Stable)";
@@ -399,7 +465,7 @@
             }
 
             // Section 2: Core Reasons
-            let reasoning = `คุณได้รับการวินิจฉัยเป็นบุคลิกภาพกลุ่ม <strong>${primaryType}</strong> เนื่องจากพฤติกรรมของคุณสะท้อนความสัมพันธ์เชิงตรรกะในแบบจำลองดังนี้:<br><br>`;
+            let reasoning = `คุณได้รับการวินิจฉัยเป็นบุคลิกภาพกลุ่ม <strong>${primaryType}</strong> เนื่องจากพฤเบิกพิกัดสะท้อนความสัมพันธ์เชิงตรรกะในแบบจำลองดังนี้:<br><br>`;
             if (gamma_ii > 1.0) {
                 reasoning += `• <strong>ค่า $\\gamma_{ii}$ ของคุณสูง (${gamma_ii.toFixed(2)} > 1.0):</strong> การรับรู้และการประมวลผลภายในตัวตน (Self-perception loop) มีค่าเหนือพลังการส่งสัญญาณออกภายนอก เป็นคุณลักษณะของกลุ่มสาย <strong>Introverted (${mbti_E_I})</strong><br>`;
             } else {
@@ -412,17 +478,58 @@
             }
             document.getElementById('analysis-reason').innerHTML = reasoning;
 
-            // Section 3: Future Drift Prediction
-            let driftType = "";
-            driftType += (mbti_E_I === "I") ? "E" : "I";
-            driftType += mbti_S_N;
-            driftType += (mbti_T_F === "F") ? "T" : "F";
-            driftType += (mbti_A_B === "J") ? "P" : "J";
-            document.getElementById('future-mbti').innerText = driftType;
 
-            let futureReasoning = `จากแบบจำลองเมื่อเวลาผ่านไปและระบบของคุณเข้าสู่กระบวนการผ่อนคลายความตึงเครียด (Emotional Relaxation ที่ค่า $E(t)=0$) ตัวแปรการเคลื่อนที่ในเมทริกซ์กระแสไหลจะปรับเปลี่ยนเข้าหาค่าอนันต์แบบแปรผกผัน:<br><br>`;
-            futureReasoning += `ผลลัพธ์นี้ทำให้พิกัดเรขาคณิตของคุณเกิดการบิดโค้งและดึงดูดวิถีชีวิตเข้าหาจุดสมดุลใหม่ ส่งผลให้คุณมีแนวโน้มจะแสดงออกพฤติกรรมสลับขั้วไปเป็นไทป์ทางเลือกอย่าง <strong>${driftType}</strong> ในช่วงถัดไปของชีวิตเมื่อจิตใจเติบโตขึ้น`;
-            document.getElementById('future-reason').innerHTML = futureReasoning;
+            // --- TARGETED VECTOR REPAIR & MBTI DRIFT ANALYSIS ---
+            let futureStack = [...baseStack];
+            let driftAnalysisText = "";
+
+            // All possible functions to search for the absolute lowest value
+            let poolOfFunctions = ["Fi", "Fe", "Ti", "Te", "Si", "Se", "Ni", "Ne"];
+            let lowestFunction = poolOfFunctions[0];
+            let lowestValue = 999;
+
+            poolOfFunctions.forEach(f => {
+                let currentVal = getFunctionValue(f, scores);
+                if (currentVal < lowestValue) {
+                    lowestValue = currentVal;
+                    lowestFunction = f;
+                }
+            });
+
+            if (currentStatus === "GRIP") {
+                // -หากผู้ตอบแบบสอบถามได้เงื่อนไขของการ "ติด Grip" ให้แก้ Grip โดยดึงฟังก์ชันที่ต่ำสุดมาแทนเป็นฟังก์ชันตัวที่ 1
+                let oldF1 = futureStack[0];
+                futureStack[0] = lowestFunction; // แทนที่ตำแหน่งที่ 1 ด้วยฟังก์ชันที่ต่ำที่สุดเพื่อฟื้นฟู
+                
+                let driftType = deriveTypeFromFunctions(futureStack[0], futureStack[1], futureStack[2], futureStack[3]);
+                document.getElementById('future-mbti').innerText = driftType;
+
+                driftAnalysisText = `เนื่องจากระบบตรวจพบสภาวะวิกฤต <strong>Grip Breakdown</strong> ซึ่งส่งผลให้กัปตันหลักตัวที่ 1 (${oldF1}) นิ่งสนิทและปิดตัวลง (มีค่าระดับพลังงานทรุดฮวบต่ำสุด)<br><br>`;
+                driftAnalysisText += `กลไกการเยียวยาพิกัดในอนาคต (MBTI Drift Analysis) จึงทำงานโดยการเร่งดึงฟังก์ชันที่มีพลังงานต่ำสุดคือ <strong>${lowestFunction}</strong> ขึ้นมาประจำตำแหน่งที่ 1 เพื่อทำหน้าที่เป็นเสาหลักใหม่ชดเชยวิถีพฤติกรรม ผลลัพธ์จากการปรับโมเดลฟังก์ชันใหม่นี้จะดริฟต์โครงสร้างบุคลิกภาพในอนาคตของคุณไปสู่ไทป์ทางเลือกคือ <strong>${driftType}</strong> ทำให้คุณเปลี่ยนผ่านไปสู่โหมดชีวิตที่มีความเด็ดเดี่ยวในทางที่ขาดหายไปครับ`;
+
+            } else if (currentStatus === "LOOP") {
+                // -หากผู้ตอบแบบสอบถามได้เงื่อนไขของการ "ติด Loop" ให้แก้ Loop โดยดึงฟังก์ชันตัวที่ต่ำสุดขึ้นมาแทนเป็นฟังก์ชันตัวที่ 2
+                let oldF2 = futureStack[1];
+                futureStack[1] = lowestFunction; // แทนที่ตำแหน่งที่ 2 ด้วยฟังก์ชันที่ต่ำที่สุดเพื่อกู้คืนสะพานสมดุล
+                
+                let driftType = deriveTypeFromFunctions(futureStack[0], futureStack[1], futureStack[2], futureStack[3]);
+                document.getElementById('future-mbti').innerText = driftType;
+
+                driftAnalysisText = `เนื่องจากระบบตรวจพบสภาวะข้อมูลหมุนวน <strong>Loop Blockade</strong> ซึ่งเกิดจากการข้ามและตัดสัญญาณของฟังก์ชันรองตัวที่ 2 (${oldF2}) จนทำให้ระบบสะท้อนค่ากุดต่ำที่สุดบนพิกัดเรดาร์ชาร์ต<br><br>`;
+                driftAnalysisText += `กลไกการแก้ปัญหาจึงจำเป็นต้องสวมบทบาทดึงเอาฟังก์ชันที่ดิ่งต่ำสุดในสารบบคือ <strong>${lowestFunction}</strong> ขึ้นมาสอดแทรกทำหน้าที่ในตำแหน่งที่ 2 แทนเพื่อทำลายวงจรปิดปิดกั้นตนเอง ผลลัพธ์ทำให้แนวโน้มบุคลิกภาพเกิดการ Drift ปรับเปลี่ยนพิกัดโครงสร้างตรรกะพฤติกรรมไปเป็นไทป์ <strong>${driftType}</strong> ซึ่งเป็นเวอร์ชันที่ก้าวข้ามลูปเดิมและสร้างสะพานเชื่อมสมดุลภายใน-ภายนอกใหม่สำเร็จครับ`;
+
+            } else {
+                // NORMAL/STABLE STATE: Predict normal maturation drift (Shadow integration / Balancing)
+                let driftType = (mbti_E_I === "I") ? "E" : "I";
+                driftType += mbti_S_N === "S" ? "N" : "S"; // Fixed S/N bug here as well!
+                driftType += (mbti_T_F === "F") ? "T" : "F";
+                driftType += (mbti_A_B === "J") ? "P" : "J";
+                
+                document.getElementById('future-mbti').innerText = driftType;
+                driftAnalysisText = `ระบบทำงานอยู่ในระดับสมดุลและเสถียรดีมาก ไม่พบความเสียหายในเวกเตอร์ฟังก์ชันจิตวิทยาใดๆ ดังนั้นเมื่อเวลาผ่านไปและระบบของคุณเข้าสู่กระบวนการปล่อยวางทางอารมณ์ตามปกติ จิตใจของคุณจะพัฒนาไปตามการหลอมรวมไทป์เงา (Shadow Integration) ตามธรรมชาติ ส่งผลให้มีแนวโน้มแสดงคุณลักษณะพฤติกรรมในขอบเขตของไทป์ <strong>${driftType}</strong> ได้อย่างยืดหยุ่นและกว้างขวางมากขึ้นเมื่ออายุมากขึ้นครับ`;
+            }
+
+            document.getElementById('future-reason').innerHTML = driftAnalysisText;
 
             // --- GENERATE RADAR CHART ---
             renderRadarChart(scores);
@@ -437,7 +544,6 @@
         function renderRadarChart(scores) {
             const ctx = document.getElementById('mbtiRadarChart').getContext('2d');
             
-            // Labels clockwise mapped into spectrum axis
             const labels = [
                 'Extraversion (E)', 
                 'Sensing (S)', 
@@ -449,9 +555,6 @@
                 'Perception (P)'
             ];
 
-            // Mapping raw scores into 8 directional axes
-            // E is powered by Expression (S) in EI, I is powered by Perception (P) in EI
-            // S vs N: S is avgP, N is avgS (or flipped according to standard design, here mapped to score averages)
             const dataValues = [
                 scores.EI.avgS, // E Axis
                 scores.SN.avgP, // S Axis
@@ -463,7 +566,6 @@
                 scores.JP.avgP  // P Axis
             ];
 
-            // If a chart already exists, destroy it before recreating (prevents glitching/ghosting)
             if (radarChartInstance !== null) {
                 radarChartInstance.destroy();
             }
