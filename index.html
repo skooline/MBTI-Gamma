@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MBTI Psychophysical Interaction & Grip/Loop Detector (γ-Model v2)</title>
+    <title>MBTI Psychophysical Interaction & Grip/Loop Detector (γ-Model v2.6)</title>
     <!-- Tailwind CSS for modern UI -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for Radar Chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .likert-radio:checked + label {
             background-color: #4f46e5;
@@ -19,9 +21,8 @@
     <div class="max-w-4xl mx-auto px-4 py-8">
         <!-- Header -->
         <header class="text-center mb-12">
-            <h1 class="text-3xl font-bold text-indigo-900 mb-2">ระบบคำนวณพลวัตบุคลิกภาพและสภาวะจิตใจขั้นสูง ($\gamma$-Model v2)</h1>
-            <p class="text-gray-600 max-w-2xl mx-auto">แบบสอบถามคัดกรอง 100 ข้อ ผสานทฤษฎีจิตวิทยาฟังก์ชันร่วมกับโครงสร้างอารมณ์ลำดับที่สองใน 
-            <a href="https://github.com/skooline/MBTI-Gamma/blob/main/unified_paper.pdf"><span class="italic font-semibold">"unified_paper.pdf"</span></a>
+            <h1 class="text-3xl font-bold text-indigo-900 mb-2">ระบบคำนวณพลวัตบุคลิกภาพและสภาวะจิตใจขั้นสูง ($\gamma$-Model v2.6)</h1>
+            <p class="text-gray-600 max-w-2xl mx-auto">แบบสอบถามคัดกรอง 100 ข้อ ผสานทฤษฎีจิตวิทยาฟังก์ชันร่วมกับวิเคราะห์ทิศทางด้วยแผนภูมิเรดาร์
             </p>
         </header>
 
@@ -38,7 +39,7 @@
 
                 <div class="mt-12 text-center">
                     <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-3 rounded-xl shadow-lg transition duration-200 transform hover:-translate-y-0.5">
-                        ประมวลผลเมทริกซ์ความต้านทานและค่าความเร่งอารมณ์ ($E$)
+                        ประมวลผลเมทริกซ์ความต้านทานและวิเคราะห์ทิศทางไทป์
                     </button>
                 </div>
             </form>
@@ -50,6 +51,15 @@
                 <h2 class="text-2xl font-bold text-gray-900 mb-2">ผลการวิเคราะห์พิกัดและสภาวะบุคลิกภาพ</h2>
                 <div id="primary-mbti" class="text-6xl font-extrabold text-indigo-600 tracking-wider my-4">XXXX</div>
                 <p class="text-sm text-gray-500">คำนวณโดยอิงจากอัตราส่วนการรับรู้เทียบกับการแสดงออกจริง ณ ปัจจุบัน</p>
+            </div>
+
+            <!-- Radar Chart Visualizer -->
+            <div class="bg-white p-6 rounded-2xl border border-gray-200">
+                <h3 class="text-lg font-bold text-gray-900 mb-2 text-center">แผนภูมิเรดาร์แสดงแนวโน้มความเอนเอียงบุคลิกภาพ (MBTI Spectrum)</h3>
+                <p class="text-xs text-gray-500 text-center mb-6">กราฟแสดงค่าเฉลี่ยคะแนน (1-5) ยิ่งกราฟเอนไปทางขั้วใด แสดงว่าคุณมีแนวโน้มใช้ฟังก์ชันฝั่งนั้นเด่นชัด</p>
+                <div class="w-full max-w-md mx-auto aspect-square">
+                    <canvas id="mbtiRadarChart"></canvas>
+                </div>
             </div>
 
             <!-- Matrix Display -->
@@ -192,7 +202,7 @@
             { id: 55, type: "P", dim: "TF", q: "คุณรู้สึกอึดอัดเมื่อเห็นคนรอบตัวใช้อารมณ์เหนือกฎเกณฑ์และเหตุผลในการตัดสินความถูกต้อง" },
             { id: 56, type: "S", dim: "TF", q: "คุณใช้ตรรกะที่เป็นสากลและเด็ดขาดในการตัดสินใจ โดยตัดความสัมพันธ์ส่วนตัวออกไป" },
             { id: 57, type: "P", dim: "TF", q: "คุณรับรู้ได้ทันทีว่าค่านิยมหรือความเชื่อมั่นภายในของใครบางคนกำลังโดนทำร้าย" },
-            { id: 58, type: "S", dim: "TF", q: "คุณมักจะแสดงความอบอุ่น ปลอบโยน และรับฟังผู้อื่นอย่างเป็นธรรมชาติเมื่อเขาเดือดร้อน" },
+            { id: 58, text: "S", dim: "TF", q: "คุณมักจะแสดงความอบอุ่น ปลอบโยน และรับฟังผู้อื่นอย่างเป็นธรรมชาติเมื่อเขาเดือดร้อน" },
             { id: 59, type: "P", dim: "TF", q: "คุณให้ความสำคัญกับความถูกต้องเที่ยงตรง (Truth) มากกว่าการประนีประนอมเพื่อความสบายใจ" },
             { id: 60, type: "S", dim: "TF", q: "คุณยินดีปรับเปลี่ยนเป้าหมายของตนเองได้เพื่อให้เกิดความสุขและความกลมเกลียวรอบตัว" },
             { id: 61, type: "P", dim: "TF", q: "คุณมักใช้เวลาวิเคราะห์ระบบการทำงานของสิ่งต่างๆ เช่น ซอฟต์แวร์ อุปกรณ์ หรือกฎระเบียบ" },
@@ -238,6 +248,9 @@
             { id: 99, type: "S", dim: "JP", q: "คุณชอบเขียนลิสต์สิ่งที่คุณต้องทำในแต่ละวันและมีความสุขเวลาได้ขีดฆ่ามันออก" },
             { id: 100, type: "P", dim: "JP", q: "คุณมองว่าการตัดสินใจเร็วเกินไปมักทำให้เราพลาดข้อมูลที่สำคัญรอบตัว" }
         ];
+
+        // Global variable to keep track of chart instance
+        let radarChartInstance = null;
 
         // Render 100 Questions Dynamic Update
         const wrapper = document.getElementById('questions-wrapper');
@@ -322,12 +335,11 @@
             let primaryType = mbti_E_I + mbti_S_N + mbti_T_F + mbti_A_B;
 
             // Advanced: Calculate Emotion Observable Metric E(t) = dot(M) + M^2
-            // We model variance of specific dimensions to signify internal interaction stress/acceleration
             let ei_gap = Math.abs(scores.EI.avgS - scores.EI.avgP);
             let tf_gap = Math.abs(scores.TF.avgS - scores.TF.avgP);
             let jp_gap = Math.abs(scores.JP.avgS - scores.JP.avgP);
             
-            // Emotion quantity represents second-order divergence[cite: 1]
+            // Emotion quantity represents second-order divergence
             let emotion_E = (ei_gap * 0.4) + (tf_gap * 0.4) + (jp_gap * 0.2);
 
             // Display Base Scores
@@ -346,43 +358,57 @@
 
             remedySection.classList.add('hidden');
 
-            // Threshold rules for stress states via physical bifurcation benchmarks[cite: 1]
+            // --- GRIP & LOOP DETECTOR FOR BOTH EXTRAVERTS AND INTROVERTS ---
             if (emotion_E > 1.65) {
-                // High second-order curvature indicates GRIP State (Inversion of identity)[cite: 1]
                 stateBadge.className = "inline-block px-4 py-2 rounded-xl text-white font-bold text-lg mb-4 bg-rose-600";
                 stateBadge.innerText = "🚨 สภาวะ: กำลังติด GRIP (วิกฤตฟังก์ชันด้อย)";
-                stateDesc.innerHTML = `ตรวจพบดัชนีอารมณ์สะสมเด่นชัด ระบบของคุณเกิดสภาวะความบิดโค้งของเรขาคณิตขั้นรุนแรง (High Curvature Distortion) ส่งผลให้ฟังก์ชันหลักพังทลายลงชั่วคราวและผลักให้คุณตกลงไปใช้ฟังก์ชันด้อยที่สุด (Inferior Function) ของตนเองอย่างบิดเบือน เช่น คนสายคิดตรรกะระเบิดเป็นอารมณ์แปรปรวน หรือคนสายจินตนาการกลายเป็นย้ำคิดย้ำทำหมกมุ่นกับรายละเอียดความสะอาด[cite: 1]`;
-                
                 remedySection.classList.remove('hidden');
-                remedyText.innerHTML = `ต้องลดค่าความเร่งอารมณ์ลงโดยทันทีโดยการเข้าสู่ <strong>Emotional Relaxation ($E(t)=0$)</strong> หยุดส่งสัญญาณออกภายนอก ($I_S$) ชั่วคราว[cite: 1] ปล่อยวางความเครียดดึงตัวออกมาจากสิ่งเร้าเดิมๆ (Detachment) หันมาทำกิจกรรมทางกายภาพที่ง่ายและผ่อนคลาย (เช่น นอนหลับ พักผ่อน เดินเล่นเงียบๆ) เพื่อลดทอนแรงบิดของสนามอารมณ์ให้ค่อยๆ คืนตัวตามเวลา[cite: 1]`;
 
-            } else if (emotion_E >= 0.95 && emotion_E <= 1.65 && (mbti_E_I === "I" && gamma_ii > 1.1)) {
-                // Loop State (Dominant-Tertiary Loop for introverts)
-                stateBadge.className = "inline-block px-4 py-2 rounded-xl text-white font-bold text-lg mb-4 bg-amber-500";
-                stateBadge.innerText = "🔄 สภาวะ: กำลังติด LOOP (วงจรปิดประมวลผลตัวเอง)";
-                stateDesc.innerHTML = `ตรวจพบสภาวะการหมุนวนของข้อมูลแบบวงรอบปิดขนาดย่อม คุณกำลังติดสภาวะ **Dom-Tert Loop** พลังงานไหลวนอยู่เฉพาะฟังก์ชันการรับรู้ภายในตนเอง (Self-feedback loop สูง) โดยข้ามฟังก์ชันการปรับตัวภายนอก (Auxiliary Function) ทำให้คุณคิดวนเวียนอยู่กับความระแวง ทฤษฎีสมคบคิด หรืออดีตที่แก้ไขไม่ได้โดยไม่ยอมลงมือแก้ปัญหาในโลกความเป็นจริง[cite: 1]`;
-                
-                remedySection.classList.remove('hidden');
-                remedyText.innerHTML = `คุณจำเป็นต้องบังคับระบบให้เปิดรับ <strong>Cross-Perception Signal ($\\gamma_{ij}$)</strong> ด้วยการหักดิบออกไปคุยกับคนอื่น[cite: 1] หาข้อมูลชุดใหม่จากสิ่งแวดล้อมจริง หรือลงมือทำกิจกรรมอะไรก็ตามที่บีบให้สมองต้องแสดงพฤติกรรมตอบสนองต่อโลกภายนอก (Auxiliary Function) เพื่อตัดวงจรปิด (Feedback Loop) และกระจายแรงดันคณิตศาสตร์ออกจากระบบภายใน[cite: 1]`;
+                if (mbti_E_I === "I") {
+                    stateDesc.innerHTML = `ตรวจพบดัชนีอารมณ์สะสมเด่นชัด ระบบเกิดความบิดโค้งของเรขาคณิตขั้นรุนแรง ฟังก์ชันหลักภายในฝั่ง Introvert ของคุณเหนื่อยล้าจนพังทลายลงชั่วคราว จิตใต้สำนึกจึงผลักดันให้คุณถูกครอบงำด้วย <strong>ฟังก์ชันด้อยสาย Extraverted (Inferior Grip)</strong> ส่งผลให้คุณมีพฤติกรรมระเบิดอารมณ์ฉุนเฉียว ทำพฤติกรรมเสี่ยงๆ อย่างขาดสติ หรือพยายามควบคุมสิ่งแวดล้อมภายนอกอย่างบ้าคลั่งเพื่อชดเชยความอ่อนแอในใจ`;
+                    remedyText.innerHTML = `ต้องลดค่าความเร่งอารมณ์ลงโดยทันทีโดยการเข้าสู่สภาวะผ่อนคลาย หยุดส่งสัญญาณออกภายนอกชั่วคราว ปล่อยวางความเครียดดึงตัวออกมาจากสิ่งเร้าเดิมๆ หันมาทำกิจกรรมทางกายภาพที่ง่ายและผ่อนคลาย (เช่น นอนหลับ พักผ่อน เดินเล่นเงียบๆ)`;
+                } else {
+                    stateDesc.innerHTML = `ตรวจพบดัชนีอารมณ์สะสมเด่นชัด ระบบเกิดสภาวะพลิกขั้วอย่างรุนแรง ฟังก์ชันการส่งสัญญาณภายนอกฝั่ง Extravert ของคุณเกิดภาวะโอลาหลชั่วคราว ส่งผลให้จิตใจคุณจมดิ่งและถูกครอบงำด้วย <strong>ฟังก์ชันด้อยสาย Introverted (Inferior Grip)</strong> จากคนที่ร่าเริงชอบเข้าสังคม คุณจะเปลี่ยนเป็นคนเก็บตัวเงียบกะทันหัน แยกตัวจากผู้คน ตกอยู่ในความหดหู่ ย้ำคิดย้ำทำ และเกิดความระแวงสิ่งรอบตัวหรือหวาดกลัวอนาคตอย่างไม่มีเหตุผล`;
+                    remedyText.innerHTML = `แนวทางแก้ไขเชิงกลไก: อย่าเพิ่งบังคับตัวเองให้ฝืนออกไปเข้าสังคม ให้เวลาตัวเองได้อยู่เงียบๆ ในพื้นที่ปลอดภัยส่วนตัว ทำกิจกรรมที่ใช้การวิเคราะห์ระบบปิดเบาๆ (เช่น จัดห้องเงียบๆ แยกไฟล์ในคอมพิวเตอร์ หรืออ่านหนังสือเล่มโปรด)เพื่อสร้างความเสถียรคืนมา`;
+                }
+
+            } else if (emotion_E >= 0.95 && emotion_E <= 1.65) {
+                if (mbti_E_I === "I" && gamma_ii > 1.1) {
+                    stateBadge.className = "inline-block px-4 py-2 rounded-xl text-white font-bold text-lg mb-4 bg-amber-500";
+                    stateBadge.innerText = "🔄 สภาวะ: กำลังติด LOOP (วงจรปิดประมวลผลตัวเองภายใน)";
+                    stateDesc.innerHTML = `ตรวจพบสภาวะข้อมูลหมุนวนในวงรอบปิด คุณกำลังติดสภาวะ <strong>Dom-Tert Loop ของกลุ่มเก็บตัว</strong> พลังงานไหลวนอยู่เฉพาะฟังก์ชันการรับรู้และการคิดภายในตนเอง (Self-feedback loop $\\gamma_{ii}$ สูงเกินเกณฑ์) โดยมองข้ามฟังก์ชันรองในการปรับตัวสู่โลกภายนอก (Auxiliary Function) ทำให้คุณคิดฟุ้งซ่าน วนเวียนอยู่กับความระแวง หรือความผิดพลาดในอดีตจนเกิดอาการเฉื่อยชา ไม่ยอมตัดสินใจลงมือแก้ปัญหาในโลกความจริง`;
+                    remedySection.classList.remove('hidden');
+                    remedyText.innerHTML = `คุณจำเป็นต้องเปิดรับข้อมูลใหม่ภายนอกด้วยการออกไปพูดคุยแลกเปลี่ยนกับคนอื่น หรือลงมือทำกิจกรรมที่บังคับให้สมองต้องตอบสนองต่อโลกภายนอกทันทีเพื่อตัดวงจรปิด (Feedback Loop) นี้ออกไป`;
+
+                } else if (mbti_E_I === "E" && gamma_ii < 0.85) {
+                    stateBadge.className = "inline-block px-4 py-2 rounded-xl text-white font-bold text-lg mb-4 bg-amber-500";
+                    stateBadge.innerText = "🔄 สภาวะ: กำลังติด LOOP (วงจรเปิดกระจายสัญญาณอย่างไร้แรงต้าน)";
+                    stateDesc.innerHTML = `ตรวจพบสภาวะการส่งสัญญาณล้นเกินและไร้สมดุล คุณกำลังติดสภาวะ <strong>Dom-Tert Loop ของกลุ่มแสดงออก (Extraverted Loop)</strong> ระบบของคุณขาดแรงต้านทานสะท้อนคิดทบทวนภายใน ส่งผลให้คุณใช้ฟังก์ชันหลักคู่กับฟังก์ชันสามที่หันออกนอกทั้งหมด โดยมองข้ามฟังก์ชันรองที่เป็นโลกภายใน คุณจะวิ่งวุ่นทำกิจกรรมไม่หยุด แสวงหาความตื่นเต้นหรือผลลัพธ์ภายนอกอย่างบ้าคลั่ง ทำอะไรรวดเร็วเกินไปโดยไม่ยอมหยุดพักฟังเสียงความรู้สึกตัวเอง`;
+                    remedySection.classList.remove('hidden');
+                    remedyText.innerHTML = `คุณจำเป็นต้องเพิ่มค่าความต้านทานภายในให้ระบบ โดยการบังคับตัวเองให้หยุดทำกิจกรรมภายนอกชั่วคราว ปิดโซเชียลมีเดีย แล้วใช้เวลาอยู่คนเดียวเงียบๆ ทำกิจกรรมสะท้อนคิด เช่น การเขียนบันทึกประจำวัน (Journaling) หรือนั่งตกตะกอนเป้าหมายชีวิตแบบสันโดษ`;
+                } else {
+                    stateBadge.className = "inline-block px-4 py-2 rounded-xl text-white font-bold text-lg mb-4 bg-emerald-600";
+                    stateBadge.innerText = "✅ สภาวะ: สมดุลและเสถียร (Jury Stable)";
+                    stateDesc.innerHTML = `ระบบปฏิสัมพันธ์ของคุณอยู่ในเกณฑ์สอดคล้องคงตัว พลังงานกระแสไหลอารมณ์เคลื่อนที่ผ่านวิถีปกติ สภาวะทางจิตใจไม่มีแรงบิดโค้งที่อันตรายและสามารถแสดงจุดเด่นของบุคลิกภาพออกมาได้อย่างเป็นธรรมชาติ`;
+                }
 
             } else {
-                // Balanced state
                 stateBadge.className = "inline-block px-4 py-2 rounded-xl text-white font-bold text-lg mb-4 bg-emerald-600";
                 stateBadge.innerText = "✅ สภาวะ: สมดุลและเสถียร (Jury Stable)";
-                stateDesc.innerHTML = `ระบบปฏิสัมพันธ์ทางจิตฟิสิกส์ของคุณอยู่ในเกณฑ์สอดคล้องคงตัว พลังงานกระแสไหลอารมณ์เคลื่อนที่ผ่านวิถีปกติที่ควบคุมได้ตามทฤษฎีสเปกตรัม สภาวะทางจิตใจไม่มีแรงบิดโค้งที่อันตรายและสามารถแสดงจุดเด่นของบุคลิกภาพออกมาได้อย่างเป็นธรรมชาติ[cite: 1]`;
+                stateDesc.innerHTML = `ระบบปฏิสัมพันธ์ของคุณอยู่ในเกณฑ์สอดคล้องคงตัว พลังงานกระแสไหลอารมณ์เคลื่อนที่ผ่านวิถีปกติ สภาวะทางจิตใจไม่มีแรงบิดโค้งที่อันตรายและสามารถแสดงจุดเด่นของบุคลิกภาพออกมาได้อย่างเป็นธรรมชาติ`;
             }
 
             // Section 2: Core Reasons
             let reasoning = `คุณได้รับการวินิจฉัยเป็นบุคลิกภาพกลุ่ม <strong>${primaryType}</strong> เนื่องจากพฤติกรรมของคุณสะท้อนความสัมพันธ์เชิงตรรกะในแบบจำลองดังนี้:<br><br>`;
             if (gamma_ii > 1.0) {
-                reasoning += `• <strong>ค่า $\\gamma_{ii}$ ของคุณสูง (${gamma_ii.toFixed(2)} > 1.0):</strong> การรับรู้และการประมวลผลภายในตัวตน (Self-perception loop) มีค่าเหนือพลังการส่งสัญญาณออกภายนอก เป็นคุณลักษณะของกลุ่มสาย <strong>Introverted (${mbti_E_I})</strong> ระบบมีความหน่วงเฉื่อยตอบสนองต่อสิ่งเร้าช้าแต่ละเอียดอ่อน[cite: 1]<br>`;
+                reasoning += `• <strong>ค่า $\\gamma_{ii}$ ของคุณสูง (${gamma_ii.toFixed(2)} > 1.0):</strong> การรับรู้และการประมวลผลภายในตัวตน (Self-perception loop) มีค่าเหนือพลังการส่งสัญญาณออกภายนอก เป็นคุณลักษณะของกลุ่มสาย <strong>Introverted (${mbti_E_I})</strong><br>`;
             } else {
-                reasoning += `• <strong>ค่า $\\gamma_{ii}$ ของคุณต่ำ (${gamma_ii.toFixed(2)} ≤ 1.0):</strong> ความเข้มข้นของการส่งสัญญาณแอคทีฟ ($I_S$) มีค่าสูงกว่าระบบรับรู้สะท้อนคิดภายใน เป็นลักษณะของกลุ่มสาย <strong>Extraverted (${mbti_E_I})</strong> พร้อมกระจายพลังงานโต้ตอบฉับไว[cite: 1]<br>`;
+                reasoning += `• <strong>ค่า $\\gamma_{ii}$ ของคุณต่ำ (${gamma_ii.toFixed(2)} ≤ 1.0):</strong> ความเข้มข้นของการส่งสัญญาณแอคทีฟ มีค่าสูงกว่าระบบรับรู้สะท้อนคิดภายใน เป็นลักษณะของกลุ่มสาย <strong>Extraverted (${mbti_E_I})</strong><br>`;
             }
             if (mbti_T_F === "T") {
-                reasoning += `• <strong>ตัวสร้างกระแสตรรกะเด่น:</strong> ระบบพยายามปรับเสถียรค่าคงที่ผ่านเกณฑ์จำแนก (Jury Stability Criterion) ส่งผลให้วิถีของกระแสอารมณ์ของคุณมักคุมทิศทางให้อยู่ในขอบเขตความเสถียรได้ดี[cite: 1]<br>`;
+                reasoning += `• <strong>ตัวสร้างกระแสตรรกะเด่น:</strong> ระบบพยายามปรับเสถียรค่าคงที่ผ่านเกณฑ์จำแนก ส่งผลให้วิถีของกระแสอารมณ์ของคุณมักคุมทิศทางให้อยู่ในขอบเขตความเสถียรได้ดี<br>`;
             } else {
-                reasoning += `• <strong>ตัวสร้างกระแสอารมณ์แปรปรวน:</strong> ไวต่อการเปลี่ยนสถานะแบบขยับกว้าง (Bifurcation Theory) ส่งผลให้เกิดความไวและเป็นวงรอบอารมณ์ตอบสนองอย่างรวดเร็วกับความรู้สึกแวดล้อม[cite: 1]<br>`;
+                reasoning += `• <strong>ตัวสร้างกระแสอารมณ์แปรปรวน:</strong> ไวต่อการเปลี่ยนสถานะแบบขยับกว้าง ส่งผลให้เกิดความไวและเป็นวงรอบอารมณ์ตอบสนองอย่างรวดเร็วกับความรู้สึกแวดล้อม<br>`;
             }
             document.getElementById('analysis-reason').innerHTML = reasoning;
 
@@ -394,14 +420,101 @@
             driftType += (mbti_A_B === "J") ? "P" : "J";
             document.getElementById('future-mbti').innerText = driftType;
 
-            let futureReasoning = `จากแบบจำลองในส่วนที่ 5 ของ <em>unified_paper.pdf</em> เมื่อเวลาผ่านไปและระบบของคุณเข้าสู่กระบวนการผ่อนคลายความตึงเครียด (Emotional Relaxation ที่ค่า $E(t)=0$) ตัวแปรการเคลื่อนที่ในเมทริกซ์กระแสไหล $M(t)$ จะปรับเปลี่ยนเข้าหาค่าอนันต์แบบแปรผกผัน $m_{ii}(t) = \\frac{1}{t+\\tau_i}$[cite: 1]:<br><br>`;
-            futureReasoning += `ผลลัพธ์นี้ทำให้พิกัดเรขาคณิตของคุณเกิดการบิดโค้งและดึงดูดวิถีชีวิต (Geodesic Attraction) เข้าหาจุดสมดุลใหม่ ส่งผลให้คุณมีแนวโน้มจะแสดงออกพฤติกรรมสลับขั้วไปเป็นไทป์ทางเลือกอย่าง <strong>${driftType}</strong> ด้วยเหตุผลที่เมื่อระบบภายในคลายความหน่วงลงหรือความตึงเครียดของขั้วอารมณ์ที่โตสุดขั้วลดลง ระบบจะปรับทิศทางสู่เส้นทางเดินที่สมดุลและกว้างขวางขึ้นในชีวิตช่วงถัดไปครับ[cite: 1]`;
+            let futureReasoning = `จากแบบจำลองเมื่อเวลาผ่านไปและระบบของคุณเข้าสู่กระบวนการผ่อนคลายความตึงเครียด (Emotional Relaxation ที่ค่า $E(t)=0$) ตัวแปรการเคลื่อนที่ในเมทริกซ์กระแสไหลจะปรับเปลี่ยนเข้าหาค่าอนันต์แบบแปรผกผัน:<br><br>`;
+            futureReasoning += `ผลลัพธ์นี้ทำให้พิกัดเรขาคณิตของคุณเกิดการบิดโค้งและดึงดูดวิถีชีวิตเข้าหาจุดสมดุลใหม่ ส่งผลให้คุณมีแนวโน้มจะแสดงออกพฤติกรรมสลับขั้วไปเป็นไทป์ทางเลือกอย่าง <strong>${driftType}</strong> ในช่วงถัดไปของชีวิตเมื่อจิตใจเติบโตขึ้น`;
             document.getElementById('future-reason').innerHTML = futureReasoning;
+
+            // --- GENERATE RADAR CHART ---
+            renderRadarChart(scores);
 
             // Smooth Scroll into display
             const resContainer = document.getElementById('result-container');
             resContainer.classList.remove('hidden');
             resContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Function to handle Chart.js Radar logic
+        function renderRadarChart(scores) {
+            const ctx = document.getElementById('mbtiRadarChart').getContext('2d');
+            
+            // Labels clockwise mapped into spectrum axis
+            const labels = [
+                'Extraversion (E)', 
+                'Sensing (S)', 
+                'Thinking (T)', 
+                'Judging (J)', 
+                'Introversion (I)', 
+                'Intuition (N)', 
+                'Feeling (F)', 
+                'Perception (P)'
+            ];
+
+            // Mapping raw scores into 8 directional axes
+            // E is powered by Expression (S) in EI, I is powered by Perception (P) in EI
+            // S vs N: S is avgP, N is avgS (or flipped according to standard design, here mapped to score averages)
+            const dataValues = [
+                scores.EI.avgS, // E Axis
+                scores.SN.avgP, // S Axis
+                scores.TF.avgS, // T Axis
+                scores.JP.avgS, // J Axis
+                scores.EI.avgP, // I Axis
+                scores.SN.avgS, // N Axis
+                scores.TF.avgP, // F Axis
+                scores.JP.avgP  // P Axis
+            ];
+
+            // If a chart already exists, destroy it before recreating (prevents glitching/ghosting)
+            if (radarChartInstance !== null) {
+                radarChartInstance.destroy();
+            }
+
+            radarChartInstance = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'พิกัดพลังงานจำลองตัวตนของคุณ',
+                        data: dataValues,
+                        backgroundColor: 'rgba(79, 70, 229, 0.2)',
+                        borderColor: 'rgba(79, 70, 229, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(79, 70, 229, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(79, 70, 229, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            suggestedMin: 1,
+                            suggestedMax: 5,
+                            ticks: {
+                                stepSize: 1,
+                                color: '#9ca3af'
+                            },
+                            pointLabels: {
+                                font: {
+                                    size: 13,
+                                    weight: 'bold'
+                                },
+                                color: '#1e1b4b'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
         }
     </script>
 </body>
